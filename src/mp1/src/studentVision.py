@@ -68,7 +68,10 @@ class lanenet_detector():
         #5. Convert each pixel to unint8, then apply threshold to get binary image
         sobel_uint8 = cv2.convertScaleAbs(sobel_combined)
         binary_output = np.zeros_like(sobel_uint8)
-        binary_output[(thresh_min < sobel_uint8) & (sobel_uint8 < thresh_max)] = 1
+        cond = (sobel_uint8 >= thresh_min) & (sobel_uint8 <= thresh_max)
+        not_cond = (sobel_uint8 < thresh_min) | (sobel_uint8 > thresh_max)
+        binary_output[cond] = 1
+        binary_output[not_cond] = 0
 
 
         ## TODO
