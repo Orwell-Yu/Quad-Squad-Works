@@ -61,17 +61,19 @@ class lanenet_detector():
         #2. Gaussian blur the image
         blurred_img = cv2.GaussianBlur(gray_img, (5,5), 0)
         #3. Use cv2.Sobel() to find derievatives for both X and Y Axis
-        sobel_x = cv2.Sobel(blurred_img, cv2.CV_64F, 1, 0, ksize=3)
-        sobel_y = cv2.Sobel(blurred_img, cv2.CV_64F, 0, 1, ksize=3)
+        sobel_x = cv2.Sobel(blurred_img, cv2.CV_8U, 1, 0, ksize=3)
+        sobel_y = cv2.Sobel(blurred_img, cv2.CV_8U, 0, 1, ksize=3)
         #4. Use cv2.addWeighted() to combine the results
         sobel_combined = cv2.addWeighted(np.absolute(sobel_x), 0.5, np.absolute(sobel_y), 0.5, 0)
         #5. Convert each pixel to unint8, then apply threshold to get binary image
         sobel_uint8 = cv2.convertScaleAbs(sobel_combined)
-        binary_output = np.zeros_like(sobel_uint8)
+        cv2.imshow('image', sobel_uint8)
+        cv2.waitKey(0)
+        binary_output = np.zeros_like(sobel_uint8, dtype=bool)
         binary_output[np.logical_and(sobel_uint8 >= thresh_min, sobel_uint8 <= thresh_max)] = 1
-        binary_output[np.logical_and(sobel_uint8 < thresh_min, sobel_uint8 > thresh_max)] = 0
 
-        # print(np.sum(binary_output))
+        cv2.imshow('image', binary_output.astype(np.uint8))
+        cv2.waitKey(0)
 
 
         ## TODO
@@ -96,9 +98,9 @@ class lanenet_detector():
         ## TODO
         binary_output[np.logical_and(h > 100, h < 140)] = 0
 
-        cv2.imshow('image', img)
-        cv2.imshow('image', binary_output)
-        cv2.waitKey(0)
+        # cv2.imshow('image', img)
+        # cv2.imshow('image', binary_output)
+        # cv2.waitKey(0)
 
 
         ####
