@@ -68,10 +68,10 @@ class lanenet_detector():
         #5. Convert each pixel to unint8, then apply threshold to get binary image
         sobel_uint8 = cv2.convertScaleAbs(sobel_combined)
         binary_output = np.zeros_like(sobel_uint8)
-        cond = (sobel_uint8 >= thresh_min) & (sobel_uint8 <= thresh_max)
-        not_cond = (sobel_uint8 < thresh_min) | (sobel_uint8 > thresh_max)
-        binary_output[cond] = 1
-        binary_output[not_cond] = 0
+        binary_output[np.logical_and(sobel_uint8 >= thresh_min, sobel_uint8 <= thresh_max)] = 1
+        binary_output[np.logical_and(sobel_uint8 < thresh_min, sobel_uint8 > thresh_max)] = 0
+
+        # print(np.sum(binary_output))
 
 
         ## TODO
@@ -90,15 +90,15 @@ class lanenet_detector():
         #2. Apply threshold on S channel to get binary image
         h,l,s = cv2.split(hls_img)
         binary_output = np.zeros_like(s)
-        binary_output[s > 100 & s < 255] = 1
+        binary_output[np.logical_and(s > 100, s < 255)] = 1
         binary_output[s == 0] = 1
         #Hint: threshold on H to remove green grass
         ## TODO
-        binary_output[h > 100 & h < 140] = 0
+        binary_output[np.logical_and(h > 100, h < 140)] = 0
 
-        # cv2.imshow('image', img)
-        # cv2.imshow('image', binary_output)
-        # cv2.waitKey(0)
+        cv2.imshow('image', img)
+        cv2.imshow('image', binary_output)
+        cv2.waitKey(0)
 
 
         ####
@@ -145,14 +145,14 @@ class lanenet_detector():
                             [des_height, 0],
                             [des_height, des_width],
                             [des_width, 0]])
-        src = np.float32(src_pts)
-        des = np.float32(des_pts)
+        src = src_pts.astype(np.float32)
+        des = des_pts.astype(np.float32)
 
         #2. Get M, the transform matrix, and Minv, the inverse using cv2.getPerspectiveTransform()
         M = cv2.getPerspectiveTransform(src,des)
         Minv = cv2.getPerspectiveTransform(des,src)
         #3. Generate warped image in bird view using cv2.warpPerspective()
-        warped_img = cv2.warpPerspective(img, M, (des_width, des_height))
+        warped_img = cv2.warpPerspective(img.astype(np.float32), M, (des_width, des_height))
 
         ## TODO
 

@@ -48,14 +48,14 @@ def line_fit(binary_warped):
 		win_bottom = win_top + window_height
 		# Identify window boundaries in x and y (and right and left)
 		##TO DO
-		left_x = [leftx_current - margin, win_top]
-		left_y = [leftx_current + margin, win_bottom]
-		right_x = [rightx_current - margin, win_top]
-		right_y = [rightx_current + margin, win_bottom]
+		left_x = (leftx_current - margin, win_top)
+		left_y = (leftx_current + margin, win_bottom)
+		right_x = (rightx_current - margin, win_top)
+		right_y = (rightx_current + margin, win_bottom)
 		####
 		# Draw the windows on the visualization image using cv2.rectangle()
-		warped_color = cv2.rectangle(warped_color, left_x, left_y, (0,0,255))
-		warped_color = cv2.rectangle(warped_color, right_x, right_y, (0,0,255))
+		warped_color = cv2.rectangle(binary_warped, left_x, left_y, (0,0,255))
+		warped_color = cv2.rectangle(binary_warped, right_x, right_y, (0,0,255))
 
 		##TO DO
 
