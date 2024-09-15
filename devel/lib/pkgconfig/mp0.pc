@@ -1,0 +1,8 @@
+prefix=/home/zhewen4/Quad-Squad-Works/devel
+
+Name: mp0
+Description: Description of mp0
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

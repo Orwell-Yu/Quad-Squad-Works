@@ -1,0 +1,8 @@
+prefix=/home/zhewen4/Quad-Squad-Works/install
+
+Name: mp1
+Description: Description of mp1
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

@@ -96,9 +96,9 @@ class lanenet_detector():
         ## TODO
         binary_output[h > 100 & h < 140] = 0
 
-        cv2.imshow('image', img)
-        cv2.imshow('image', binary_output)
-        cv2.waitKey(0)
+        # cv2.imshow('image', img)
+        # cv2.imshow('image', binary_output)
+        # cv2.waitKey(0)
 
 
         ####
