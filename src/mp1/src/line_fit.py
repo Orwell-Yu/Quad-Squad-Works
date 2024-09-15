@@ -44,23 +44,46 @@ def line_fit(binary_warped):
 
 	# Step through the windows one by one
 	for window in range(nwindows):
+		win_top = binary_warped.shape[0] - (window + 1) *window_height
+		win_bottom = win_top + window_height
 		# Identify window boundaries in x and y (and right and left)
 		##TO DO
-
+		left_x = [leftx_current - margin, win_top]
+		left_y = [leftx_current + margin, win_bottom]
+		right_x = [rightx_current - margin, win_top]
+		right_y = [rightx_current + margin, win_bottom]
 		####
 		# Draw the windows on the visualization image using cv2.rectangle()
+		warped_color = cv2.rectangle(warped_color, left_x, left_y, (0,0,255))
+		warped_color = cv2.rectangle(warped_color, right_x, right_y, (0,0,255))
+
 		##TO DO
 
 		####
 		# Identify the nonzero pixels in x and y within the window
+		left_window = np.where((nonzerox > leftx_current - margin) &
+						 	   (nonzerox < leftx_current + margin) &
+							   (nonzeroy > win_top) & (nonzeroy < win_bottom))
+		right_window = np.where((nonzerox > rightx_current - margin) &
+						 	   (nonzerox < rightx_current + margin) &
+							   (nonzeroy > win_top) & (nonzeroy < win_bottom))
 		##TO DO
 
 		####
 		# Append these indices to the lists
+		left_lane_inds.append(left_window[0])
+		right_lane_inds.append(right_window[0])
 		##TO DO
 
 		####
 		# If you found > minpix pixels, recenter next window on their mean position
+		left_nonezerox = nonzerox[left_window]
+		if len(left_nonezerox > minpix):
+			leftx_current = int(np.mean(left_nonezerox))
+
+		right_nonezerox = nonzerox[right_window]
+		if len(right_nonezerox > minpix):
+			rightx_current = int(np.mean(right_nonezerox))
 		##TO DO
 
 		####
@@ -81,7 +104,9 @@ def line_fit(binary_warped):
 	# the second order polynomial is unable to be sovled.
 	# Thus, it is unable to detect edges.
 	try:
-	##TODO
+		left_fit = np.polyfit(lefty, leftx, deg=2)
+		right_fit = np.polyfit(righty, rightx, deg=2)
+	##TO DO
 
 	####
 	except TypeError:

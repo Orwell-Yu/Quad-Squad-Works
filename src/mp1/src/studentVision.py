@@ -10,7 +10,7 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import Header
 from cv_bridge import CvBridge, CvBridgeError
 from std_msgs.msg import Float32
-from skimage import morphology
+from skimage import morphology # type: ignore
 
 
 
@@ -57,10 +57,19 @@ class lanenet_detector():
         Apply sobel edge detection on input image in x, y direction
         """
         #1. Convert the image to gray scale
+        gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         #2. Gaussian blur the image
+        blurred_img = cv2.GaussianBlur(gray_img, (5,5), 0)
         #3. Use cv2.Sobel() to find derievatives for both X and Y Axis
+        sobel_x = cv2.Sobel(blurred_img, cv2.CV_64F, 1, 0, ksize=3)
+        sobel_y = cv2.Sobel(blurred_img, cv2.CV_64F, 0, 1, ksize=3)
         #4. Use cv2.addWeighted() to combine the results
+        sobel_combined = cv2.addWeighted(np.absolute(sobel_x), 0.5, np.absolute(sobel_y), 0.5, 0)
         #5. Convert each pixel to unint8, then apply threshold to get binary image
+        sobel_uint8 = cv2.convertScaleAbs(sobel_combined)
+        binary_output = np.zeros_like(sobel_uint8)
+        binary_output[(thresh_min < sobel_uint8) & (sobel_uint8 < thresh_max)] = 1
+
 
         ## TODO
 
@@ -74,9 +83,20 @@ class lanenet_detector():
         Convert RGB to HSL and threshold to binary image using S channel
         """
         #1. Convert the image from RGB to HSL
+        hls_img = cv2.cvtColor(img, cv2.COLOR_BGR2HLS)
         #2. Apply threshold on S channel to get binary image
+        h,l,s = cv2.split(hls_img)
+        binary_output = np.zeros_like(s)
+        binary_output[s > 100 & s < 255] = 1
+        binary_output[s == 0] = 1
         #Hint: threshold on H to remove green grass
         ## TODO
+        binary_output[h > 100 & h < 140] = 0
+
+        cv2.imshow('image', img)
+        cv2.imshow('image', binary_output)
+        cv2.waitKey(0)
+
 
         ####
 
@@ -88,6 +108,9 @@ class lanenet_detector():
         Get combined binary image from color filter and sobel filter
         """
         #1. Apply sobel filter and color filter on input image
+        SobelOutput = self.gradient_thresh(img)
+        ColorOutput = self.color_thresh(img)
+
         #2. Combine the outputs
         ## Here you can use as many methods as you want.
 
@@ -108,8 +131,25 @@ class lanenet_detector():
         Get bird's eye view from input image
         """
         #1. Visually determine 4 source points and 4 destination points
+        src_height, src_width = img.shape[:2]
+        src_pts = np.array([[0, 0],
+                            [0,src_height],
+                            [src_width, 0],
+                            [src_height, src_width]])
+        
+        des_width, des_height = src_height, src_width
+        des_pts = np.array([[0, 0],
+                            [des_height, 0],
+                            [des_height, des_width],
+                            [des_width, 0]])
+        src = np.float32(src_pts)
+        des = np.float32(des_pts)
+
         #2. Get M, the transform matrix, and Minv, the inverse using cv2.getPerspectiveTransform()
+        M = cv2.getPerspectiveTransform(src,des)
+        Minv = cv2.getPerspectiveTransform(des,src)
         #3. Generate warped image in bird view using cv2.warpPerspective()
+        warped_img = cv2.warpPerspective(img, M, (des_width, des_height))
 
         ## TODO
 
