@@ -52,7 +52,7 @@ class lanenet_detector():
             self.pub_bird.publish(out_bird_msg)
 
 
-    def gradient_thresh(self, img, thresh_min=25, thresh_max=100):
+    def gradient_thresh(self, img, thresh_min=100, thresh_max=255):
         """
         Apply sobel edge detection on input image in x, y direction
         """
@@ -67,13 +67,12 @@ class lanenet_detector():
         sobel_combined = cv2.addWeighted(np.absolute(sobel_x), 0.5, np.absolute(sobel_y), 0.5, 0)
         #5. Convert each pixel to unint8, then apply threshold to get binary image
         sobel_uint8 = cv2.convertScaleAbs(sobel_combined)
-        # print(sobel_uint8)
-        # print(f'{np.min(sobel_uint8)} <= sobel <= {np.max(sobel_uint8)}')
-        # cv2.imshow('image', sobel_uint8)
-        # cv2.waitKey(0)
         binary_output = np.zeros_like(sobel_uint8, dtype=np.uint8)
-        binary_output[np.logical_and(sobel_uint8 >= 100, sobel_uint8 <= 255)] = 255
+        binary_output[np.logical_and(sobel_uint8 >= thresh_min, sobel_uint8 <= thresh_max)] = 255
         # TODO: change threshold for binary output if needed
+
+        # cv2.imshow('image', img)
+        # cv2.waitKey(0)
 
         ####
 
@@ -136,28 +135,26 @@ class lanenet_detector():
         #1. Visually determine 4 source points and 4 destination points
         src_height, src_width = img.shape[:2]
         src = np.float32([
-                            [203, 257],
-                            [261, 257],
-                            [550, 475],
-                            [0, 390],
+                            [266, 260],
+                            [375, 260],
+                            [0, 422],
+                            [606, 422],
                         ])
         
-        # des_width, des_height = src_height, src_width
-        des_width, des_height = src_width, src_height
-        des = np.float32([[0, 0],
-                            [des_width-1, 0],
-                            [des_width-1, des_height-1],
-                            [0, des_height-1]])
+        des_width, des_height = src_height, src_width
+        # des_width, des_height = src_width, src_height
+        des = np.float32([
+                        [0, 0],
+                        [des_width, 0],
+                        [0, des_height],
+                        [des_width, des_height],
+                        ])
 
         #2. Get M, the transform matrix, and Minv, the inverse using cv2.getPerspectiveTransform()
         M = cv2.getPerspectiveTransform(src,des)
         Minv = cv2.getPerspectiveTransform(des,src)
         #3. Generate warped image in bird view using cv2.warpPerspective()
         warped_img = cv2.warpPerspective(img.astype(np.float32), M, (des_width, des_height))
-        
-        print(f'{np.min(warped_img)} <= w_img <= {np.max(warped_img)}')
-        cv2.imshow('warped', warped_img)
-        cv2.waitKey(0)
 
         ## TODO
 
