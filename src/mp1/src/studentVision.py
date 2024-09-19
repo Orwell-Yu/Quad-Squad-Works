@@ -122,11 +122,12 @@ class lanenet_detector():
         ## TODO
 
         ####
-
-        binaryImage = np.zeros_like(SobelOutput)
-        binaryImage[(ColorOutput==1)|(SobelOutput==1)] = 1
+        binaryImage = np.zeros_like(SobelOutput, dtype=np.uint8)
+        binaryImage[(ColorOutput==255) | (SobelOutput==255)] = 255
+        
         # Remove noise from binary image
-        binaryImage = morphology.remove_small_objects(binaryImage.astype('bool'),min_size=50,connectivity=2)
+        # binaryImage = morphology.remove_small_objects(binaryImage.astype('bool'),min_size=50,connectivity=2)
+        binaryImage = morphology.remove_small_objects(binaryImage.astype('bool'),min_size=5,connectivity=2)
 
         return binaryImage
 
