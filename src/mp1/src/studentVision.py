@@ -75,12 +75,6 @@ class lanenet_detector():
         binary_output[np.logical_and(sobel_uint8 >= 100, sobel_uint8 <= 255)] = 255
         # TODO: change threshold for binary output if needed
 
-        # cv2.imshow('image', binary_output)
-        # cv2.waitKey(0)
-
-
-        ## TODO
-
         ####
 
         return binary_output
@@ -136,26 +130,34 @@ class lanenet_detector():
         """
         Get bird's eye view from input image
         """
+        cv2.imshow('img', img.astype(np.uint8)*255)
+        print(f'width: {len(img[0])}, height: {len(img)}')
+
         #1. Visually determine 4 source points and 4 destination points
         src_height, src_width = img.shape[:2]
-        src_pts = np.array([[0, 0],
-                            [0,src_height],
-                            [src_width, 0],
-                            [src_height, src_width]])
+        src = np.float32([
+                            [203, 257],
+                            [261, 257],
+                            [550, 475],
+                            [0, 390],
+                        ])
         
-        des_width, des_height = src_height, src_width
-        des_pts = np.array([[0, 0],
-                            [des_height, 0],
-                            [des_height, des_width],
-                            [des_width, 0]])
-        src = src_pts.astype(np.float32)
-        des = des_pts.astype(np.float32)
+        # des_width, des_height = src_height, src_width
+        des_width, des_height = src_width, src_height
+        des = np.float32([[0, 0],
+                            [des_width-1, 0],
+                            [des_width-1, des_height-1],
+                            [0, des_height-1]])
 
         #2. Get M, the transform matrix, and Minv, the inverse using cv2.getPerspectiveTransform()
         M = cv2.getPerspectiveTransform(src,des)
         Minv = cv2.getPerspectiveTransform(des,src)
         #3. Generate warped image in bird view using cv2.warpPerspective()
         warped_img = cv2.warpPerspective(img.astype(np.float32), M, (des_width, des_height))
+        
+        print(f'{np.min(warped_img)} <= w_img <= {np.max(warped_img)}')
+        cv2.imshow('warped', warped_img)
+        cv2.waitKey(0)
 
         ## TODO
 
