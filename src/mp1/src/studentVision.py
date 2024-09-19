@@ -129,9 +129,6 @@ class lanenet_detector():
         """
         Get bird's eye view from input image
         """
-        cv2.imshow('img', img.astype(np.uint8)*255)
-        print(f'width: {len(img[0])}, height: {len(img)}')
-
         #1. Visually determine 4 source points and 4 destination points
         src_height, src_width = img.shape[:2]
         src = np.float32([
