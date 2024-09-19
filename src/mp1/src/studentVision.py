@@ -94,18 +94,15 @@ class lanenet_detector():
         hls_img = cv2.cvtColor(img, cv2.COLOR_BGR2HLS)
         #2. Apply threshold on S channel to get binary image
         h,l,s = cv2.split(hls_img)
-        binary_output = np.zeros_like(s)
-        binary_output[np.logical_and(s > 100, s < 255)] = 1
-        binary_output[s == 0] = 1
+        h = cv2.convertScaleAbs(h)
+        s = cv2.convertScaleAbs(s)
+        l = cv2.convertScaleAbs(l)
+        binary_output = np.zeros_like(s, dtype=np.uint8)
+        binary_output[np.logical_and(s >= 233, s <= 255)] = 255 # for yellow
         #Hint: threshold on H to remove green grass
         ## TODO
-        binary_output[np.logical_and(h > 100, h < 140)] = 0
-
-        # cv2.imshow('image', img)
-        # cv2.imshow('image', binary_output)
-        # cv2.waitKey(0)
-
-
+        binary_output[np.logical_and(h > 90, h < 140)] = 0
+        binary_output[np.logical_and(h > 180, h < 300)] = 0
         ####
 
         return binary_output
