@@ -134,8 +134,8 @@ class lanenet_detector():
         #1. Visually determine 4 source points and 4 destination points
         src_height, src_width = img.shape[:2]
         src = np.float32([
-                            [255, 257],
-                            [390, 257],
+                            [280, 257],
+                            [375, 257],
                             [0, 385],
                             [597, 385],
                         ])
