@@ -68,10 +68,12 @@ class lanenet_detector():
         #5. Convert each pixel to unint8, then apply threshold to get binary image
         sobel_uint8 = cv2.convertScaleAbs(sobel_combined)
         binary_output = np.zeros_like(sobel_uint8, dtype=np.uint8)
-        binary_output[np.logical_and(sobel_uint8 >= thresh_min, sobel_uint8 <= thresh_max)] = 255
+        binary_output[np.logical_and(sobel_uint8 >= 20, sobel_uint8 <= thresh_max)] = 255
         # TODO: change threshold for binary output if needed
 
         # cv2.imshow('image', img)
+        # cv2.imshow('sobel', sobel_x.astype(np.uint8))
+        # cv2.imshow('binary', binary_output)
         # cv2.waitKey(0)
 
         ####
@@ -132,10 +134,10 @@ class lanenet_detector():
         #1. Visually determine 4 source points and 4 destination points
         src_height, src_width = img.shape[:2]
         src = np.float32([
-                            [266, 260],
-                            [375, 260],
-                            [0, 422],
-                            [606, 422],
+                            [255, 257],
+                            [390, 257],
+                            [0, 385],
+                            [597, 385],
                         ])
         
         des_width, des_height = src_height, src_width
@@ -154,6 +156,9 @@ class lanenet_detector():
         warped_img = cv2.warpPerspective(img.astype(np.float32), M, (des_width, des_height))
 
         ## TODO
+        cv2.imshow('warped', warped_img)
+        cv2.imshow('image', img.astype(np.uint8)*255)
+        cv2.waitKey(1)
 
         ####
 
