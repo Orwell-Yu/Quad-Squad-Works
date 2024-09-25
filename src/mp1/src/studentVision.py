@@ -23,6 +23,7 @@ class lanenet_detector():
         # self.sub_image = rospy.Subscriber('/gem/front_single_camera/front_single_camera/image_raw', Image, self.img_callback, queue_size=1)
         # Uncomment this line for lane detection of videos in rosbag
         self.sub_image = rospy.Subscriber('camera/image_raw', Image, self.img_callback, queue_size=1)
+        # self.sub_image = rospy.Subscriber('zed2/zed_node/rgb/image_rect_color', Image, self.img_callback, queue_size=1)
         self.pub_image = rospy.Publisher("lane_detection/annotate", Image, queue_size=1)
         self.pub_bird = rospy.Publisher("lane_detection/birdseye", Image, queue_size=1)
         self.left_line = Line(n=5)
@@ -68,13 +69,13 @@ class lanenet_detector():
         #5. Convert each pixel to unint8, then apply threshold to get binary image
         sobel_uint8 = cv2.convertScaleAbs(sobel_combined)
         binary_output = np.zeros_like(sobel_uint8, dtype=np.uint8)
-        binary_output[np.logical_and(sobel_uint8 >= 20, sobel_uint8 <= thresh_max)] = 255
+        binary_output[np.logical_and(sobel_uint8 >= 100, sobel_uint8 <= thresh_max)] = 255
         # TODO: change threshold for binary output if needed
 
         # cv2.imshow('image', img)
-        # # cv2.imshow('sobel', sobel_x.astype(np.uint8))
-        # # cv2.imshow('binary', binary_output)
-        # cv2.waitKey(0)
+        # cv2.imshow('sobel', sobel_x.astype(np.uint8))
+        # cv2.imshow('binary', binary_output)
+        cv2.waitKey(0)
 
         ####
 
@@ -93,6 +94,7 @@ class lanenet_detector():
         s = cv2.convertScaleAbs(s)
         l = cv2.convertScaleAbs(l)
         binary_output = np.zeros_like(s, dtype=np.uint8)
+
         # binary_output[np.logical_and(s >= 233, s <= 255)] = 255 # for yellow
         binary_output[np.logical_and.reduce((s <= 30, l >= 206))] = 255
         # binary_output[np.logical_and.reduce((s <= 64, l >= 128))] = 255
@@ -111,7 +113,7 @@ class lanenet_detector():
         # w = 640
         # x = center[1] - w//2
         # img = img[:, x:x+w]
-        # cv2.imshow('image', img)
+        # cv2.imshow('binary_output', binary_output)
         # cv2.waitKey(0)
 
         return binary_output
@@ -123,7 +125,11 @@ class lanenet_detector():
         """
         #1. Apply sobel filter and color filter on input image
         SobelOutput = self.gradient_thresh(img)
-        ColorOutput = self.color_thresh(img)
+        # cv2.imshow("color",SobelOutput)
+        # cv2.waitKey(0)
+        ColorOutput = self.color_thresh(img) # remove the bottom
+        # cv2.imshow("color",ColorOutput)
+        # cv2.waitKey(0)
 
         #2. Combine the outputs
         ## Here you can use as many methods as you want.
@@ -132,12 +138,15 @@ class lanenet_detector():
 
         ####
         binaryImage = np.zeros_like(SobelOutput, dtype=np.uint8)
-        # binaryImage[(ColorOutput==255) | (SobelOutput==255)] = 255
-        binaryImage[(ColorOutput==255)] = 255
+        binaryImage[(ColorOutput==255) | (SobelOutput==255)] = 255
+        # binaryImage[(ColorOutput==255)] = 255
         
         # Remove noise from binary image
         # binaryImage = morphology.remove_small_objects(binaryImage.astype('bool'),min_size=50,connectivity=2)
         binaryImage = morphology.remove_small_objects(binaryImage.astype('bool'),min_size=5,connectivity=2)
+
+        # cv2.imshow('Combined Binary Image', (binaryImage * 255).astype(np.float32))
+        # cv2.waitKey(0)  # Wait for a key press to close the window
 
         return binaryImage
 
