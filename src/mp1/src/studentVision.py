@@ -167,28 +167,14 @@ class lanenet_detector():
         #                     [597, 385],
         #                 ])
 
-        # src = np.float32([
-        #                     [201, 306],
-        #                     [468, 306],
-        #                     [10, 434],
-        #                     [633, 434],
-        #                 ])
-
-
+        # Those for bags
         src = np.float32([
                             [add + 200, 216],
                             [add + 420, 216],
                             [add + 109, 314],
                             [add + 460, 314],
                         ])
-        # src = np.float32([
-        #                     [200, 216 * height_p],
-        #                     [420, 216 * height_p],
-        #                     [109, 314 * height_p],
-        #                     [460, 314 * height_p],
-        #                 ])
         
-        # des_width, des_height = src_height, src_width
         des_width, des_height = src_width, src_height
         des = np.float32([
                         [0, 0],
