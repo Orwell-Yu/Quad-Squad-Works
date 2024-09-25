@@ -22,8 +22,8 @@ class lanenet_detector():
         # Uncomment this line for lane detection of GEM car in Gazebo
         # self.sub_image = rospy.Subscriber('/gem/front_single_camera/front_single_camera/image_raw', Image, self.img_callback, queue_size=1)
         # Uncomment this line for lane detection of videos in rosbag
-        self.sub_image = rospy.Subscriber('camera/image_raw', Image, self.img_callback, queue_size=1)
-        # self.sub_image = rospy.Subscriber('zed2/zed_node/rgb/image_rect_color', Image, self.img_callback, queue_size=1)
+        # self.sub_image = rospy.Subscriber('camera/image_raw', Image, self.img_callback, queue_size=1)
+        self.sub_image = rospy.Subscriber('zed2/zed_node/rgb/image_rect_color', Image, self.img_callback, queue_size=1)
         self.pub_image = rospy.Publisher("lane_detection/annotate", Image, queue_size=1)
         self.pub_bird = rospy.Publisher("lane_detection/birdseye", Image, queue_size=1)
         self.left_line = Line(n=5)
@@ -36,12 +36,7 @@ class lanenet_detector():
 
         try:
             # Convert a ROS image message into an OpenCV image
-            cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
-        except CvBridgeError as e:
-            print(e)
-
-        raw_img = cv_image.copy()
-        mask_image, bird_image = self.detection(raw_img)
+            cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")100
 
         if mask_image is not None and bird_image is not None:
             # Convert an OpenCV image into a ROS image message
@@ -75,7 +70,7 @@ class lanenet_detector():
         # cv2.imshow('image', img)
         # cv2.imshow('sobel', sobel_x.astype(np.uint8))
         # cv2.imshow('binary', binary_output)
-        cv2.waitKey(0)
+        # cv2.waitKey(0)
 
         ####
 
@@ -164,18 +159,19 @@ class lanenet_detector():
 
         #1. Visually determine 4 source points and 4 destination points
         src_height, src_width = img.shape[:2]
+        #Those for Gazebo
         # src = np.float32([
         #                     [280, 257],
-        #                     [360, 257],
-        #                     [0, 400],
-        #                     [597, 400],
+        #                     [375, 257],
+        #                     [0, 385],
+        #                     [597, 385],
         #                 ])
-        height_p = img.shape[0] // 480
+
         # src = np.float32([
-        #                     [280, 257 * height_p],
-        #                     [375, 257 * height_p],
-        #                     [0, 385 * height_p],
-        #                     [597, 385 * height_p],
+        #                     [201, 306],
+        #                     [468, 306],
+        #                     [10, 434],
+        #                     [633, 434],
         #                 ])
 
 
@@ -192,13 +188,13 @@ class lanenet_detector():
         #                     [460, 314 * height_p],
         #                 ])
         
-        des_width, des_height = src_height, src_width
-        # des_width, des_height = src_width, src_height
+        # des_width, des_height = src_height, src_width
+        des_width, des_height = src_width, src_height
         des = np.float32([
                         [0, 0],
                         [des_width, 0],
-                        [0, des_height],
-                        [des_width, des_height],
+                        [20, des_height],
+                        [des_width-20, des_height],
                         ])
 
         #2. Get M, the transform matrix, and Minv, the inverse using cv2.getPerspectiveTransform()
@@ -208,9 +204,9 @@ class lanenet_detector():
         warped_img = cv2.warpPerspective(img.astype(np.float32), M, (des_width, des_height))
 
         ## TODO
-        # cv2.imshow('warped', warped_img)
-        # cv2.imshow('image', img.astype(np.uint8)*255)
-        # cv2.waitKey(1)
+        cv2.imshow('warped', warped_img)
+        cv2.imshow('image', img.astype(np.uint8)*255)
+        cv2.waitKey(1)
 
         ####
 
