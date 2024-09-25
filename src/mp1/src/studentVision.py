@@ -22,8 +22,8 @@ class lanenet_detector():
         # Uncomment this line for lane detection of GEM car in Gazebo
         # self.sub_image = rospy.Subscriber('/gem/front_single_camera/front_single_camera/image_raw', Image, self.img_callback, queue_size=1)
         # Uncomment this line for lane detection of videos in rosbag
-        # self.sub_image = rospy.Subscriber('camera/image_raw', Image, self.img_callback, queue_size=1)
-        self.sub_image = rospy.Subscriber('zed2/zed_node/rgb/image_rect_color', Image, self.img_callback, queue_size=1)
+        self.sub_image = rospy.Subscriber('camera/image_raw', Image, self.img_callback, queue_size=1)
+        # self.sub_image = rospy.Subscriber('zed2/zed_node/rgb/image_rect_color', Image, self.img_callback, queue_size=1)
         self.pub_image = rospy.Publisher("lane_detection/annotate", Image, queue_size=1)
         self.pub_bird = rospy.Publisher("lane_detection/birdseye", Image, queue_size=1)
         self.left_line = Line(n=5)
@@ -36,8 +36,12 @@ class lanenet_detector():
 
         try:
             # Convert a ROS image message into an OpenCV image
-            cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")100
+            cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
+        except CvBridgeError as e:
+            print(e)
 
+        raw_img = cv_image.copy()
+        mask_image, bird_image = self.detection(raw_img)
         if mask_image is not None and bird_image is not None:
             # Convert an OpenCV image into a ROS image message
             out_img_msg = self.bridge.cv2_to_imgmsg(mask_image, 'bgr8')
@@ -64,7 +68,8 @@ class lanenet_detector():
         #5. Convert each pixel to unint8, then apply threshold to get binary image
         sobel_uint8 = cv2.convertScaleAbs(sobel_combined)
         binary_output = np.zeros_like(sobel_uint8, dtype=np.uint8)
-        binary_output[np.logical_and(sobel_uint8 >= 100, sobel_uint8 <= thresh_max)] = 255
+        # binary_output[np.logical_and(sobel_uint8 >= 100, sobel_uint8 <= thresh_max)] = 255 # Those for Gazebo & Normal bags
+        binary_output[np.logical_and(sobel_uint8 >= 35, sobel_uint8 <= thresh_max)] = 255
         # TODO: change threshold for binary output if needed
 
         # cv2.imshow('image', img)
@@ -167,7 +172,7 @@ class lanenet_detector():
         #                     [597, 385],
         #                 ])
 
-        # Those for bags
+        #Those are for normal bags
         src = np.float32([
                             [add + 200, 216],
                             [add + 420, 216],
@@ -175,6 +180,14 @@ class lanenet_detector():
                             [add + 460, 314],
                         ])
         
+        #Those are for 0830
+        # src = np.float32([
+        #                     [546, 377],
+        #                     [690, 377],
+        #                     [235, 690],
+        #                     [1008, 690],
+        #                 ])
+
         des_width, des_height = src_width, src_height
         des = np.float32([
                         [0, 0],
