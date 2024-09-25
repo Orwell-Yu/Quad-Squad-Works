@@ -20,9 +20,9 @@ class lanenet_detector():
         self.bridge = CvBridge()
         # NOTE
         # Uncomment this line for lane detection of GEM car in Gazebo
-        self.sub_image = rospy.Subscriber('/gem/front_single_camera/front_single_camera/image_raw', Image, self.img_callback, queue_size=1)
+        # self.sub_image = rospy.Subscriber('/gem/front_single_camera/front_single_camera/image_raw', Image, self.img_callback, queue_size=1)
         # Uncomment this line for lane detection of videos in rosbag
-        # self.sub_image = rospy.Subscriber('camera/image_raw', Image, self.img_callback, queue_size=1)
+        self.sub_image = rospy.Subscriber('camera/image_raw', Image, self.img_callback, queue_size=1)
         self.pub_image = rospy.Publisher("lane_detection/annotate", Image, queue_size=1)
         self.pub_bird = rospy.Publisher("lane_detection/birdseye", Image, queue_size=1)
         self.left_line = Line(n=5)
@@ -72,8 +72,8 @@ class lanenet_detector():
         # TODO: change threshold for binary output if needed
 
         # cv2.imshow('image', img)
-        # cv2.imshow('sobel', sobel_x.astype(np.uint8))
-        # cv2.imshow('binary', binary_output)
+        # # cv2.imshow('sobel', sobel_x.astype(np.uint8))
+        # # cv2.imshow('binary', binary_output)
         # cv2.waitKey(0)
 
         ####
@@ -93,12 +93,26 @@ class lanenet_detector():
         s = cv2.convertScaleAbs(s)
         l = cv2.convertScaleAbs(l)
         binary_output = np.zeros_like(s, dtype=np.uint8)
-        binary_output[np.logical_and(s >= 233, s <= 255)] = 255 # for yellow
+        # binary_output[np.logical_and(s >= 233, s <= 255)] = 255 # for yellow
+        binary_output[np.logical_and.reduce((s <= 30, l >= 206))] = 255
+        # binary_output[np.logical_and.reduce((s <= 64, l >= 128))] = 255
         #Hint: threshold on H to remove green grass
         ## TODO
-        binary_output[np.logical_and(h > 90, h < 140)] = 0
+        # # for main.py
+        # binary_output[np.logical_and(h > 90, h < 140)] = 0 
+        # binary_output[np.logical_and(h > 180, h < 300)] = 0
+        binary_output[np.logical_and(h > 70, h < 140)] = 0 
         binary_output[np.logical_and(h > 180, h < 300)] = 0
+        # binary_output[np.logical_and(h > 180, h < 300)] = 0
         ####
+
+        # center = img.shape
+        # center = (center[0] // 2, center[1] // 2)
+        # w = 640
+        # x = center[1] - w//2
+        # img = img[:, x:x+w]
+        # cv2.imshow('image', img)
+        # cv2.waitKey(0)
 
         return binary_output
 
@@ -118,7 +132,8 @@ class lanenet_detector():
 
         ####
         binaryImage = np.zeros_like(SobelOutput, dtype=np.uint8)
-        binaryImage[(ColorOutput==255) | (SobelOutput==255)] = 255
+        # binaryImage[(ColorOutput==255) | (SobelOutput==255)] = 255
+        binaryImage[(ColorOutput==255)] = 255
         
         # Remove noise from binary image
         # binaryImage = morphology.remove_small_objects(binaryImage.astype('bool'),min_size=50,connectivity=2)
@@ -131,14 +146,42 @@ class lanenet_detector():
         """
         Get bird's eye view from input image
         """
+        center = img.shape
+        center = (center[0] // 2, center[1] // 2)
+        w = 640
+        add = center[1] - w//2
+        # x = center[1] - w//2
+        # img = img[:, x:x+w]
+
         #1. Visually determine 4 source points and 4 destination points
         src_height, src_width = img.shape[:2]
+        # src = np.float32([
+        #                     [280, 257],
+        #                     [360, 257],
+        #                     [0, 400],
+        #                     [597, 400],
+        #                 ])
+        height_p = img.shape[0] // 480
+        # src = np.float32([
+        #                     [280, 257 * height_p],
+        #                     [375, 257 * height_p],
+        #                     [0, 385 * height_p],
+        #                     [597, 385 * height_p],
+        #                 ])
+
+
         src = np.float32([
-                            [280, 257],
-                            [375, 257],
-                            [0, 385],
-                            [597, 385],
+                            [add + 200, 216],
+                            [add + 420, 216],
+                            [add + 109, 314],
+                            [add + 460, 314],
                         ])
+        # src = np.float32([
+        #                     [200, 216 * height_p],
+        #                     [420, 216 * height_p],
+        #                     [109, 314 * height_p],
+        #                     [460, 314 * height_p],
+        #                 ])
         
         des_width, des_height = src_height, src_width
         # des_width, des_height = src_width, src_height
@@ -156,9 +199,9 @@ class lanenet_detector():
         warped_img = cv2.warpPerspective(img.astype(np.float32), M, (des_width, des_height))
 
         ## TODO
-        cv2.imshow('warped', warped_img)
-        cv2.imshow('image', img.astype(np.uint8)*255)
-        cv2.waitKey(1)
+        # cv2.imshow('warped', warped_img)
+        # cv2.imshow('image', img.astype(np.uint8)*255)
+        # cv2.waitKey(1)
 
         ####
 
