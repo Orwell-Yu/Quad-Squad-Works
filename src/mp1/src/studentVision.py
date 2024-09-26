@@ -22,8 +22,8 @@ class lanenet_detector():
         # Uncomment this line for lane detection of GEM car in Gazebo
         # self.sub_image = rospy.Subscriber('/gem/front_single_camera/front_single_camera/image_raw', Image, self.img_callback, queue_size=1)
         # Uncomment this line for lane detection of videos in rosbag
-        # self.sub_image = rospy.Subscriber('camera/image_raw', Image, self.img_callback, queue_size=1)
-        self.sub_image = rospy.Subscriber('zed2/zed_node/rgb/image_rect_color', Image, self.img_callback, queue_size=1)
+        self.sub_image = rospy.Subscriber('camera/image_raw', Image, self.img_callback, queue_size=1)
+        # self.sub_image = rospy.Subscriber('zed2/zed_node/rgb/image_rect_color', Image, self.img_callback, queue_size=1)
         self.pub_image = rospy.Publisher("lane_detection/annotate", Image, queue_size=1)
         self.pub_bird = rospy.Publisher("lane_detection/birdseye", Image, queue_size=1)
         self.left_line = Line(n=5)
@@ -132,12 +132,8 @@ class lanenet_detector():
         # cv2.waitKey(0)
 
         #2. Combine the outputs
-        ## Here you can use as many methods as you want.
-
-        ## TODO
-
-        ####
-        binaryImage = np.zeros_like(SobelOutput, dtype=np.uint8)
+        ## Here you can use as many method8 >= 20
+        binaryImage=np.zeros_like(SobelOutput,dtype=np.uint8)
         binaryImage[(ColorOutput==255) | (SobelOutput==255)] = 255
         # binaryImage[(ColorOutput==255)] = 255
         
@@ -158,13 +154,14 @@ class lanenet_detector():
         center = img.shape
         center = (center[0] // 2, center[1] // 2)
         w = 640
-        add = center[1] - w//2
-        # x = center[1] - w//2
+        # add = center[1] - w//2
+        # print(add)
+        # # x = center[1] - w//2
         # img = img[:, x:x+w]
 
         #1. Visually determine 4 source points and 4 destination points
         src_height, src_width = img.shape[:2]
-        #Those for Gazebo
+        # #This is for Gazebo
         # src = np.float32([
         #                     [280, 257],
         #                     [375, 257],
@@ -172,21 +169,29 @@ class lanenet_detector():
         #                     [597, 385],
         #                 ])
 
-        # #Those are for normal bags
+        # #This is for normal bags
+        src = np.float32([
+                            [501, 216],
+                            [721, 216],
+                            [410, 314],
+                            [761, 314],
+                        ])
+        
+        # # This is for 0484
         # src = np.float32([
-        #                     [add + 200, 216],
-        #                     [add + 420, 216],
-        #                     [add + 109, 314],
-        #                     [add + 460, 314],
+        #                     [622, 276],
+        #                     [745, 276],
+        #                     [498, 363],
+        #                     [855, 363],
         #                 ])
         
-        #Those are for 0830
-        src = np.float32([
-                            [546, 377],
-                            [690, 377],
-                            [235, 690],
-                            [1008, 690],
-                        ])
+        #This is for 0830 
+        # src = np.float32([
+        #                     [546, 377],
+        #                     [690, 377],
+        #                     [235, 690],
+        #                     [1008, 690],
+        #                 ])
 
         des_width, des_height = src_width, src_height
         des = np.float32([
