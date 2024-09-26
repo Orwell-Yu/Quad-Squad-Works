@@ -22,8 +22,8 @@ class lanenet_detector():
         # Uncomment this line for lane detection of GEM car in Gazebo
         # self.sub_image = rospy.Subscriber('/gem/front_single_camera/front_single_camera/image_raw', Image, self.img_callback, queue_size=1)
         # Uncomment this line for lane detection of videos in rosbag
-        self.sub_image = rospy.Subscriber('camera/image_raw', Image, self.img_callback, queue_size=1)
-        # self.sub_image = rospy.Subscriber('zed2/zed_node/rgb/image_rect_color', Image, self.img_callback, queue_size=1)
+        # self.sub_image = rospy.Subscriber('camera/image_raw', Image, self.img_callback, queue_size=1)
+        self.sub_image = rospy.Subscriber('zed2/zed_node/rgb/image_rect_color', Image, self.img_callback, queue_size=1)
         self.pub_image = rospy.Publisher("lane_detection/annotate", Image, queue_size=1)
         self.pub_bird = rospy.Publisher("lane_detection/birdseye", Image, queue_size=1)
         self.left_line = Line(n=5)
@@ -69,7 +69,7 @@ class lanenet_detector():
         sobel_uint8 = cv2.convertScaleAbs(sobel_combined)
         binary_output = np.zeros_like(sobel_uint8, dtype=np.uint8)
         # binary_output[np.logical_and(sobel_uint8 >= 100, sobel_uint8 <= thresh_max)] = 255 # Those for Gazebo & Normal bags
-        binary_output[np.logical_and(sobel_uint8 >= 35, sobel_uint8 <= thresh_max)] = 255
+        binary_output[np.logical_and(sobel_uint8 >= 20, sobel_uint8 <= thresh_max)] = 255
         # TODO: change threshold for binary output if needed
 
         # cv2.imshow('image', img)
@@ -172,21 +172,21 @@ class lanenet_detector():
         #                     [597, 385],
         #                 ])
 
-        #Those are for normal bags
-        src = np.float32([
-                            [add + 200, 216],
-                            [add + 420, 216],
-                            [add + 109, 314],
-                            [add + 460, 314],
-                        ])
+        # #Those are for normal bags
+        # src = np.float32([
+        #                     [add + 200, 216],
+        #                     [add + 420, 216],
+        #                     [add + 109, 314],
+        #                     [add + 460, 314],
+        #                 ])
         
         #Those are for 0830
-        # src = np.float32([
-        #                     [546, 377],
-        #                     [690, 377],
-        #                     [235, 690],
-        #                     [1008, 690],
-        #                 ])
+        src = np.float32([
+                            [546, 377],
+                            [690, 377],
+                            [235, 690],
+                            [1008, 690],
+                        ])
 
         des_width, des_height = src_width, src_height
         des = np.float32([
