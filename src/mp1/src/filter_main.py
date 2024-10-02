@@ -4,60 +4,64 @@
 # You still have to do "source devel/setup.bash".
 # Eric Liang
 
+import rospkg
 import os
 import cv2
 
-# Gaussian Filter Function
+# Please check the following website for reference
+# https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_imgproc/py_filtering/py_filtering.html
 def filter_gaussian(input_img):
     img = input_img.copy()
-    # Apply Gaussian Blur with a 5x5 kernel
-    img = cv2.GaussianBlur(img, (5, 5), 0)
+    # TO-DO
+    # YOUR CODE HERE
+    # img = cv2.GaussianBlur(?)
+
+    # YOUR CODE ENDS HERE
     return img
 
-# Median Filter Function
 def filter_median(input_img):
     img = input_img.copy()
-    # Apply Median Blur with a kernel size of 5
-    img = cv2.medianBlur(img, 5)
+    # TO-DO
+    # YOUR CODE HERE
+    # img = cv2.medianBlur(?)
+
+    # YOUR CODE ENDS HERE
     return img
 
 if __name__ == '__main__':
-    # Set the image paths directly (update these with your actual paths)
-    sp_img_path = '/Users/xueqingli/Downloads/Quad-Squad-Works/src/mp1/images/salt_and_pepper.jpg'
-    ga_img_path = '/Users/xueqingli/Downloads/Quad-Squad-Works/src/mp1/images/gaussian.jpg'
-
-    # Set the result image paths (update these with your actual paths)
-    result_sp_img_ga_filter_path = '/Users/xueqingli/Downloads/Quad-Squad-Works/src/mp1/images/salt_and_pepper_gaussian_filter.jpg'
-    result_sp_img_me_filter_path = '/Users/xueqingli/Downloads/Quad-Squad-Works/src/mp1/images/salt_and_pepper_median_filter.jpg'
-    result_ga_img_ga_filter_path = '/Users/xueqingli/Downloads/Quad-Squad-Works/src/mp1/images/gaussian_noise_gaussian_filter.jpg'
-    result_ga_img_me_filter_path = '/Users/xueqingli/Downloads/Quad-Squad-Works/src/mp1/images/gaussian_noise_median_filter.jpg'
-
-    # Read the images
+    # Get path
+    rospack = rospkg.RosPack()
+    mp1_path = rospack.get_path('mp1')
+    sp_img_path = os.path.join(mp1_path, 'images', 'salt_and_pepper.jpg')
+    ga_img_path = os.path.join(mp1_path, 'images', 'gaussian.jpg')
+    result_sp_img_ga_filter_path = os.path.join(mp1_path, 'images', 'results',
+    'salt_and_pepper_gaussian_filter.jpg')
+    result_sp_img_me_filter_path = os.path.join(mp1_path, 'images', 'results',
+    'salt_and_pepper_median_filter.jpg')
+    result_ga_img_ga_filter_path = os.path.join(mp1_path, 'images', 'results',
+    'gaussian_noise_gaussian_filter.jpg')
+    result_ga_img_me_filter_path = os.path.join(mp1_path, 'images', 'results',
+    'gaussian_noise_median_filter.jpg')
+    # Read images
     sp_img = cv2.imread(sp_img_path)
     ga_img = cv2.imread(ga_img_path)
-
-    # Run the filters on the salt-and-pepper noise image
+    # Run filters
     sp_img_gaussian_filter = filter_gaussian(sp_img)
     sp_img_median_filter = filter_median(sp_img)
-
-    # Run the filters on the Gaussian noise image
     ga_img_gaussian_filter = filter_gaussian(ga_img)
     ga_img_median_filter = filter_median(ga_img)
-
-    # Show the images
+    # Show images
     cv2.imshow("Salt and Pepper before Filtering", sp_img)
     cv2.imshow("Salt and Pepper after Gaussian Filter", sp_img_gaussian_filter)
     cv2.imshow("Salt and Pepper after Median Filter", sp_img_median_filter)
     cv2.imshow("Gaussian Noise before Filtering", ga_img)
     cv2.imshow("Gaussian Noise after Gaussian Filter", ga_img_gaussian_filter)
     cv2.imshow("Gaussian Noise after Median Filter", ga_img_median_filter)
-
-    # Write the filtered images to the results folder
+    # Write images to images/results folder
     cv2.imwrite(result_sp_img_ga_filter_path, sp_img_gaussian_filter)
     cv2.imwrite(result_sp_img_me_filter_path, sp_img_median_filter)
     cv2.imwrite(result_ga_img_ga_filter_path, ga_img_gaussian_filter)
     cv2.imwrite(result_ga_img_me_filter_path, ga_img_median_filter)
-
-    # Pause to show the images
+    # Pause to show images
     print("Press any key on image windows to quit")
     cv2.waitKey(0)
