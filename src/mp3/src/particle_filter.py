@@ -36,8 +36,9 @@ class particleFilter:
 
 
             ## first quadrant
-            # x = 
-            # y =
+            x = np.random.uniform(world.width/2, world.width)
+            y = np.random.uniform(0, world.height/2)
+            # we temporaryly picked the upper right 1/4 of the blue area of figure 3
 
             particles.append(Particle(x = x, y = y, maze = world, sensor_limit = sensor_limit))
 
@@ -95,8 +96,20 @@ class particleFilter:
         """
 
         ## TODO #####
+        total_weight = 0.0
+        for particle in self.particles:
+            read_sensor = particle.read_sensor()
+            particle.weight = self.weight_gaussian_kernel(readings_robot,read_sensor)
+            total_weight += particle.weight
 
+        if total_weight == 0:
+            n = len(self.particles)
+            for particle in self.particles:
+                particle.weight = 1.0 / n
 
+        else:
+            for particle in self.particles:
+                particle.weight /= total_weight
         ###############
         # pass
 
