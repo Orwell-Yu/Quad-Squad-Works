@@ -314,10 +314,10 @@ class LidarProcessing:
             rear_right = self.sensor_limit
         
         # 4 Directions
-        return [front*100, right*100, rear*100, left*100]
+        # return [front*100, right*100, rear*100, left*100]
         
         # 8 Directions
-        # return [front*100, right*100, rear*100, left*100, front_left * 100, front_right * 100, rear_left*100, rear_right*100]
+        return [front*100, right*100, rear*100, left*100, front_left * 100, front_right * 100, rear_left*100, rear_right*100]
 
 
         

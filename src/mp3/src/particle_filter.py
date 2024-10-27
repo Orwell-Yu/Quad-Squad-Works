@@ -37,7 +37,7 @@ class particleFilter:
 
             ## first quadrant
             x = np.random.uniform(world.width/2, world.width)
-            y = np.random.uniform(0, world.height/2)
+            y = np.random.uniform(world.height/2, world.height)
             # we temporaryly picked the upper right 1/4 of the blue area of figure 3
 
             particles.append(Particle(x = x, y = y, maze = world, sensor_limit = sensor_limit))
@@ -122,6 +122,21 @@ class particleFilter:
 
         ## TODO #####
         
+        curr_sum = 0
+        cum_sum = []
+        for particle in self.particles:
+            curr_sum += particle.weight
+            cum_sum.append(curr_sum)
+        
+        new_particles_indices = [np.random.uniform(0, curr_sum) for _ in range(self.num_particles)]
+        new_particles_indices.sort()
+
+        i = 0
+        for j in range(self.num_particles):
+            while new_particles_indices[j] > cum_sum[i]:
+                i += 1
+            new_particle = Particle(x=self.particles[i].x, y=self.particles[i].y, maze=self.world, sensor_limit=self.sensor_limit, weight=(1.0 / self.num_particles))  # Create a new particle object
+            particles_new.append(new_particle)
 
         ###############
 
@@ -135,9 +150,21 @@ class particleFilter:
         """
         ## TODO #####
         
+        for particle in self.particles:
+            x = particle.x
+            y = particle.y
+            theta = particle.heading
+            for (vr, delta) in self.control:
+                dx, dy, dtheta = vehicle_dynamics(0, [x, y, theta], vr, delta)
+                x += dx
+                y += dy
+                theta += dtheta
+
+            particle.x = x
+            particle.y = y
+            particle.heading = theta
 
         ###############
-        # pass
 
 
     def runFilter(self):
@@ -149,15 +176,21 @@ class particleFilter:
         The algorithm will be implemented in the runFilter function. The steps in this function are straightforward.
         You only need to constantly loop through the steps as shown in 3. Suppose p = {p1 . . . pn} are the particles
         representing the current distribution:
-        def r u n F i l t e r
+        def runFilter
         while True :
-        sampleMotionModel ( p )
-        reading = v e h i c l e _ r e a d _ s e n s o r ( )
-        updateWeight ( p , reading )
-        p = r e s a m p l e P a r t i c l e ( p 
+        sampleMotionModel (p)
+        reading = vehicle_read_sensor()
+        updateWeight (p , reading)
+        p = resampleParticle(p)
         """
         count = 0 
         while True:
             ## TODO: (i) Implement Section 3.2.2. (ii) Display robot and particles on map. (iii) Compute and save position/heading error to plot. #####
-            pass
+            
+            self.particleMotionModel()
+            reading = self.bob.read_sensor()
+            self.updateWeight(reading)
+            self.resampleParticle()
+            count += 1
+
             ###############
