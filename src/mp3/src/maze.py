@@ -258,7 +258,7 @@ class Maze(object):
         d5 = 0
         dx = np.cos(orientation+np.pi/4) * 1 - np.sin(orientation+np.pi/4) * 0
         dy = np.sin(orientation+np.pi/4) * 1 + np.cos(orientation+np.pi/4) * 0
-        while not self.colide_wall(int(round(pos_y)),int(round(pos_x))) and d4 < sensor_limit:
+        while not self.colide_wall(int(round(pos_y)),int(round(pos_x))) and d5 < sensor_limit:
             pos_x = pos_x + dx
             pos_y = pos_y + dy
             d5 += 1
@@ -270,7 +270,7 @@ class Maze(object):
         d6 = 0
         dx = np.cos(orientation-np.pi/4) * 1 - np.sin(orientation-np.pi/4) * 0
         dy = np.sin(orientation-np.pi/4) * 1 + np.cos(orientation-np.pi/4) * 0
-        while not self.colide_wall(int(round(pos_y)),int(round(pos_x))) and d4 < sensor_limit:
+        while not self.colide_wall(int(round(pos_y)),int(round(pos_x))) and d6 < sensor_limit:
             pos_x = pos_x + dx
             pos_y = pos_y + dy
             d6 += 1
@@ -282,7 +282,7 @@ class Maze(object):
         d7 = 0
         dx = np.cos(orientation-np.pi-np.pi/4) * 1 - np.sin(orientation-np.pi-np.pi/4) * 0
         dy = np.sin(orientation-np.pi-np.pi/4) * 1 + np.cos(orientation-np.pi-np.pi/4) * 0
-        while not self.colide_wall(int(round(pos_y)),int(round(pos_x))) and d4 < sensor_limit:
+        while not self.colide_wall(int(round(pos_y)),int(round(pos_x))) and d7 < sensor_limit:
             pos_x = pos_x + dx
             pos_y = pos_y + dy
             d7 += 1
@@ -294,7 +294,7 @@ class Maze(object):
         d8 = 0
         dx = np.cos(orientation-np.pi+np.pi/4) * 1 - np.sin(orientation-np.pi+np.pi/4) * 0
         dy = np.sin(orientation-np.pi+np.pi/4) * 1 + np.cos(orientation-np.pi+np.pi/4) * 0
-        while not self.colide_wall(int(round(pos_y)),int(round(pos_x))) and d4 < sensor_limit:
+        while not self.colide_wall(int(round(pos_y)),int(round(pos_x))) and d8 < sensor_limit:
             pos_x = pos_x + dx
             pos_y = pos_y + dy
             d8 += 1
