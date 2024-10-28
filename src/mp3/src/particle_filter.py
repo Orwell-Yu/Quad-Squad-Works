@@ -121,36 +121,22 @@ class particleFilter:
         particles_new = list()
 
         ## TODO #####
-        
-        # curr_sum = 0
-        # cum_sum = []
-        # for particle in self.particles:
-        #     curr_sum += particle.weight
-        #     cum_sum.append(curr_sum)
-        
-        # new_particles_indices = [np.random.uniform(0, curr_sum) for _ in range(self.num_particles)]
-        # new_particles_indices.sort()
-
-        # for j in range(self.num_particles):
-        #     i = 0
-        #     while new_particles_indices[j] > cum_sum[i]:
-        #         i += 1
-        #     new_particle = Particle(x=self.particles[i].x, y=self.particles[i].y, maze=self.world, sensor_limit=self.sensor_limit)  # Create a new particle object
-        #     particles_new.append(new_particle)
-
 
         weights = []
-        for i in range(self.num_particles):
-            weights.append(self.particles[i].weight)  # normalize ?
-        norm = np.sum(weights)
-        norm_weights = weights / norm
+        weights_sum = 0.0
+        for p in self.particles:
+            w = p.weight
+            weights.append(w)
+            weights_sum += w
+        for i in range(len(weights)):
+            weights[i] = weights[i] / weights_sum
 
-        cumsum = np.cumsum(norm_weights)    # cumsum = np.cumsum(weights)
-        for i in range(self.num_particles):
-            rnd = np.random.uniform(0, 1)        #rnd = np.random.uniform(cumsum[0],cumsum[-1])     random index = np.random.randint(0,cumsum[-1])     
-            # rnd = np.random.rand() * cumsum[-1]
+        norm_weights = np.array(weights, dtype=np.float64)
+        cumulative_sum = np.cumsum(norm_weights)
+        for i in range(len(self.particles)):
+            rnd = np.random.uniform(0, 1)
             index = 0
-            for w in cumsum:
+            for w in cumulative_sum:
                 if w > rnd:
                     break
                 index += 1
@@ -169,36 +155,12 @@ class particleFilter:
         """
         ## TODO #####
 
-        # particle.x = x
-        # particle.y = y
-        # particle.heading = theta
-
-        # solver = ode(vehicle_dynamics)
-        # solver.set_initial_value([0, 0, 0], 0)
-        # solver.set_integrator('dopri5')
-
-        # for i, (vr, delta) in enumerate(self.control):
-        #     solver.set_f_params(vr, delta)
-        #     solver.integrate(0.01)
-        
-        # x, y, theta = solver.y
-
-        # for particle in self.particles:
-        #     particle.x += x
-        #     particle.y += y
-        #     particle.heading += theta
-
-
-
         if len(self.control) == 0:
             return
 
-        for i in range(self.num_particles):
-            initR = [self.particles[i].x, self.particles[i].y, self.particles[i].heading]
-            val = [initR[0], initR[1], initR[2]] 
-            for j in range(len(self.control)):
-                vr = self.control[j][0]                     # all controls vs last control
-                delta = self.control[j][1]
+        for i in range(len(self.particles):
+            val = [self.particles[i].x, self.particles[i].y, self.particles[i].heading]
+            for (vr, delta) in self.control:
                 val[0] += vr * np.cos(val[2]) * 0.01
                 val[1] += vr * np.sin(val[2]) * 0.01
                 val[2] += delta * 0.01
