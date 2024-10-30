@@ -99,10 +99,13 @@ class particleFilter:
         total_weight = 0.0
         for particle in self.particles:
             read_sensor = particle.read_sensor()
+            # print(read_sensor)
+            # print(readings_robot)
             particle.weight = self.weight_gaussian_kernel(readings_robot,read_sensor)
             total_weight += particle.weight
 
         if total_weight == 0.0:
+            print("total_weight = 0.0")
             n = len(self.particles)
             for particle in self.particles:
                 particle.weight = 1.0 / n
@@ -141,7 +144,7 @@ class particleFilter:
                     break
                 index += 1
             particle = self.particles[index]
-            particles_new.append(Particle(x = particle.x, y = particle.y, heading = particle.heading, maze = particle.maze, sensor_limit = particle.sensor_limit,  noisy = True)) # noisy = True
+            particles_new.append(Particle(x = particle.x, y = particle.y, heading = particle.heading, maze = particle.maze, weight = weights[index], sensor_limit = particle.sensor_limit,  noisy = True)) # noisy = True
 
         ###############
 
@@ -158,7 +161,7 @@ class particleFilter:
         if len(self.control) == 0:
             return
 
-        for i in range(len(self.particles):
+        for i in range(len(self.particles)):
             val = [self.particles[i].x, self.particles[i].y, self.particles[i].heading]
             for (vr, delta) in self.control:
                 val[0] += vr * np.cos(val[2]) * 0.01
