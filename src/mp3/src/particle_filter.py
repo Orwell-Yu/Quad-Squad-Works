@@ -30,9 +30,9 @@ class particleFilter:
         # Modify the initial particle distribution to be within the top-right quadrant of the world, and compare the performance with the whole map distribution.
         for i in range(num_particles):
 
-            # (Default) The whole map
-            x = np.random.uniform(0, world.width)
-            y = np.random.uniform(0, world.height)
+            # # (Default) The whole map
+            # x = np.random.uniform(0, world.width)
+            # y = np.random.uniform(0, world.height)
 
 
             ## first quadrant
@@ -116,6 +116,7 @@ class particleFilter:
         
         ###############
 
+
     def resampleParticle(self):
         """
         Description:
@@ -130,9 +131,6 @@ class particleFilter:
         for p in self.particles:
             w = p.weight
             weights.append(w)
-            weights_sum += w
-        for i in range(len(weights)):
-            weights[i] = weights[i] / weights_sum
 
         norm_weights = np.array(weights, dtype=np.float64)
         cumulative_sum = np.cumsum(norm_weights)
@@ -144,40 +142,58 @@ class particleFilter:
                     break
                 index += 1
             particle = self.particles[index]
-            particles_new.append(Particle(x = particle.x, y = particle.y, heading = particle.heading, maze = particle.maze, weight = weights[index], sensor_limit = particle.sensor_limit,  noisy = True)) # noisy = True
+            particles_new.append(Particle(x = particle.x, 
+                                          y = particle.y, 
+                                          heading = particle.heading, 
+                                          maze = particle.maze, 
+                                          weight = 1, 
+                                          sensor_limit = particle.sensor_limit,  
+                                          noisy = True)) # noisy = True
 
         ###############
 
         self.particles = particles_new
 
+
+    from scipy.integrate import ode
+
     def particleMotionModel(self):
         """
         Description:
-            Estimate the next state for each particle according to the control input from actual robot 
-            You can either use ode function or vehicle_dynamics function provided above
+            Estimate the next state for each particle according to the control input from actual robot.
+            Uses the ode integrator to simulate motion over the list of control inputs in self.control.
         """
-        ## TODO #####
-
         if len(self.control) == 0:
-            return
+            return  # If no control input is available, skip the motion model
 
-        for i in range(len(self.particles)):
-            val = [self.particles[i].x, self.particles[i].y, self.particles[i].heading]
-            for (vr, delta) in self.control:
-                val[0] += vr * np.cos(val[2]) * 0.01
-                val[1] += vr * np.sin(val[2]) * 0.01
-                val[2] += delta * 0.01
+        # Iterate over each particle
+        for particle in self.particles:
 
-            # update step
-            self.particles[i].x = val[0]
-            self.particles[i].y = val[1]
-            self.particles[i].heading = val[2]
-        
+            p_var= [particle.x,particle.y,particle.heading]
+            # Initialize the integrator
+            integrator = ode(vehicle_dynamics).set_integrator('dopri5')
+
+            # Set the initial state as the particle's current position and orientation
+            integrator.set_initial_value([particle.x, particle.y, particle.heading], 0)
+
+            # Simulate through all control inputs in self.control
+            for v, delta in self.control:
+                # Set control inputs as parameters for the integrator
+                integrator.set_f_params(0, p_var, v, delta)
+
+                # Integrate over a single time step (0.01s)
+                integrator.integrate(integrator.t + 0.01)
+
+                # Update the particle's state to the new state after integration
+                p_var = integrator.y
+
+            particle.x,particle.y,particle.heading=p_var
+            
+        # Clear the control list after applying them
         self.control = []
 
-        ###############
 
-
+    
     def runFilter(self):
         """
         Description:
