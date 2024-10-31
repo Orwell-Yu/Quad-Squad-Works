@@ -99,9 +99,7 @@ class particleFilter:
         total_weight = 0.0
         for particle in self.particles:
             read_sensor = particle.read_sensor()
-            # print(read_sensor)
-            # print(readings_robot)
-            particle.weight = self.weight_gaussian_kernel(readings_robot,read_sensor)
+            particle.weight = self.weight_gaussian_kernel(readings_robot, read_sensor)
             total_weight += particle.weight
 
         if total_weight == 0.0:
@@ -127,17 +125,15 @@ class particleFilter:
         ## TODO #####
 
         weights = []
-        weights_sum = 0.0
         for p in self.particles:
             w = p.weight
             weights.append(w)
 
         norm_weights = np.array(weights, dtype=np.float64)
-        cumulative_sum = np.cumsum(norm_weights)
-        # print(cumulative_sum[-1])
-        rnd=np.random.rand(len(self.particles))
-        for i in range(len(self.particles)):
-            index = np.searchsorted(cumulative_sum,rnd[i])
+        weights_sum = np.cumsum(norm_weights)
+        rnd = np.random.rand(len(self.particles))
+        for i in rnd:
+            index = np.searchsorted(weights_sum, i)
             particle = self.particles[index]
             particles_new.append(Particle(x = particle.x, 
                                           y = particle.y, 
@@ -166,16 +162,17 @@ class particleFilter:
         # Iterate over each particle
         for particle in self.particles:
 
-            p_var= [particle.x,particle.y,particle.heading]
+            p_var = [particle.x, particle.y, particle.heading]
             integrator = ode(vehicle_dynamics).set_integrator('vode')
             integrator.set_initial_value([particle.x, particle.y, particle.heading], 0)
 
-            for v, delta in self.control:
+            for param in self.control:
+                v, delta = param
                 integrator.set_f_params(integrator.t, p_var, v, delta)
                 integrator.integrate(integrator.t + 0.01)
                 p_var = integrator.y
 
-            particle.x,particle.y,particle.heading=p_var
+            particle.x, particle.y, particle.heading = p_var
             
         # Clear the control list after applying them
         self.control = []
