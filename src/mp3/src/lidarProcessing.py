@@ -168,8 +168,7 @@ class LidarProcessing:
         # x is top down
         # y is left right
 
-        filter_diagonal_tl = np.logical_and((y_points > -0.1), (x_points > -0.1))  # Top-left quadrant
-        filter_diagonal_tl = np.logical_and(filter_diagonal_tl, np.abs(np.abs(y_points) - np.abs(x_points)) <= 1)  # Points along diagonal
+        filter_diagonal_tl = np.logical_and((y_points > 0), (x_points > 0)) 
         filter_diagonal_tl = np.logical_and(filter_diagonal_tl, pixel_vals > 128)  # Pixel value threshold if applicable
         indices = np.argwhere(filter_diagonal_tl).flatten()  # Indices of the diagonal points
 
@@ -177,8 +176,7 @@ class LidarProcessing:
         self.y_front_left = np.mean(y_points[indices])
         
 
-        filter_diagonal_tr = np.logical_and((y_points < 0.1), (x_points > -0.1))  # Top-left quadrant
-        filter_diagonal_tr = np.logical_and(filter_diagonal_tr, np.abs(np.abs(y_points) - np.abs(x_points)) <= 1)  # Points along diagonal
+        filter_diagonal_tr = np.logical_and((y_points < 0), (x_points > 0)) 
         filter_diagonal_tr = np.logical_and(filter_diagonal_tr, pixel_vals > 128)  # Pixel value threshold if applicable
         indices = np.argwhere(filter_diagonal_tr).flatten()  # Indices of the diagonal points
 
@@ -186,8 +184,7 @@ class LidarProcessing:
         self.y_front_right = np.mean(y_points[indices])
 
 
-        filter_diagonal_rl = np.logical_and((y_points > -0.1), (x_points < 0.1))  # Top-left quadrant
-        filter_diagonal_rl = np.logical_and(filter_diagonal_rl, np.abs(np.abs(y_points) - np.abs(x_points)) <= 1)  # Points along diagonal
+        filter_diagonal_rl = np.logical_and((y_points > 0), (x_points < 0))  
         filter_diagonal_rl = np.logical_and(filter_diagonal_rl, pixel_vals > 128)  # Pixel value threshold if applicable
         indices = np.argwhere(filter_diagonal_rl).flatten()  # Indices of the diagonal points
 
@@ -195,8 +192,7 @@ class LidarProcessing:
         self.y_rear_left = np.mean(y_points[indices])
 
 
-        filter_diagonal_rr = np.logical_and((y_points < 0.1), (x_points < 0.1))  # Top-left quadrant
-        filter_diagonal_rr = np.logical_and(filter_diagonal_rr, np.abs(np.abs(y_points) - np.abs(x_points)) <= 1)  # Points along diagonal
+        filter_diagonal_rr = np.logical_and((y_points < 0), (x_points < 0))  
         filter_diagonal_rr = np.logical_and(filter_diagonal_rr, pixel_vals > 128)  # Pixel value threshold if applicable
         indices = np.argwhere(filter_diagonal_rr).flatten()  # Indices of the diagonal points
 

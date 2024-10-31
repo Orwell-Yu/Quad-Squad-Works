@@ -134,18 +134,15 @@ class particleFilter:
 
         norm_weights = np.array(weights, dtype=np.float64)
         cumulative_sum = np.cumsum(norm_weights)
+        # print(cumulative_sum[-1])
+        rnd=np.random.rand(len(self.particles))
         for i in range(len(self.particles)):
-            rnd = np.random.uniform(0, 1)
-            index = 0
-            for w in cumulative_sum:
-                if w > rnd:
-                    break
-                index += 1
+            index = np.searchsorted(cumulative_sum,rnd[i])
             particle = self.particles[index]
             particles_new.append(Particle(x = particle.x, 
                                           y = particle.y, 
                                           heading = particle.heading, 
-                                          maze = particle.maze, 
+                                          maze = self.world, 
                                           weight = 1, 
                                           sensor_limit = particle.sensor_limit,  
                                           noisy = True)) # noisy = True
