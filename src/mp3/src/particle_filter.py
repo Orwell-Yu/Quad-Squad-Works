@@ -170,21 +170,12 @@ class particleFilter:
         for particle in self.particles:
 
             p_var= [particle.x,particle.y,particle.heading]
-            # Initialize the integrator
-            integrator = ode(vehicle_dynamics).set_integrator('dopri5')
-
-            # Set the initial state as the particle's current position and orientation
+            integrator = ode(vehicle_dynamics).set_integrator('vode')
             integrator.set_initial_value([particle.x, particle.y, particle.heading], 0)
 
-            # Simulate through all control inputs in self.control
             for v, delta in self.control:
-                # Set control inputs as parameters for the integrator
-                integrator.set_f_params(0, p_var, v, delta)
-
-                # Integrate over a single time step (0.01s)
+                integrator.set_f_params(integrator.t, p_var, v, delta)
                 integrator.integrate(integrator.t + 0.01)
-
-                # Update the particle's state to the new state after integration
                 p_var = integrator.y
 
             particle.x,particle.y,particle.heading=p_var
@@ -214,15 +205,17 @@ class particleFilter:
         while True:
             ## TODO: (i) Implement Section 3.2.2. (ii) Display robot and particles on map. (iii) Compute and save position/heading error to plot. #####
             
+            self.particleMotionModel()
+            reading = self.bob.read_sensor()
+            self.updateWeight(reading)
+            self.resampleParticle()
+
             self.world.clear_objects()
             self.world.show_particles(self.particles)
             self.world.show_estimated_location(self.particles)
             self.world.show_robot(self.bob)
 
-            self.particleMotionModel()
-            reading = self.bob.read_sensor()
-            self.updateWeight(reading)
-            self.resampleParticle()
+            
             count += 1
 
             ###############
