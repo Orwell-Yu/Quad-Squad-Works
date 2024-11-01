@@ -168,7 +168,8 @@ class LidarProcessing:
         # x is top down
         # y is left right
 
-        filter_diagonal_tl = np.logical_and((y_points > 0), (x_points > 0)) 
+        filter_diagonal_tl = np.logical_and((y_points > 0), (x_points > 0))
+        # filter_diagonal_tl = np.logical_and(filter_front, np.abs(x_points + y_points) < 0.414)
         filter_diagonal_tl = np.logical_and(filter_diagonal_tl, pixel_vals > 128)  # Pixel value threshold if applicable
         indices = np.argwhere(filter_diagonal_tl).flatten()  # Indices of the diagonal points
 
@@ -176,7 +177,8 @@ class LidarProcessing:
         self.y_front_left = np.mean(y_points[indices])
         
 
-        filter_diagonal_tr = np.logical_and((y_points < 0), (x_points > 0)) 
+        filter_diagonal_tr = np.logical_and((y_points < 0), (x_points > 0))
+        # filter_diagonal_tr = np.logical_and(filter_front, np.abs(x_points + y_points) < 0.414)
         filter_diagonal_tr = np.logical_and(filter_diagonal_tr, pixel_vals > 128)  # Pixel value threshold if applicable
         indices = np.argwhere(filter_diagonal_tr).flatten()  # Indices of the diagonal points
 
@@ -184,7 +186,8 @@ class LidarProcessing:
         self.y_front_right = np.mean(y_points[indices])
 
 
-        filter_diagonal_rl = np.logical_and((y_points > 0), (x_points < 0))  
+        filter_diagonal_rl = np.logical_and((y_points > 0), (x_points < 0))
+        # filter_diagonal_rl = np.logical_and(filter_front, np.abs(x_points + y_points) < 0.414)
         filter_diagonal_rl = np.logical_and(filter_diagonal_rl, pixel_vals > 128)  # Pixel value threshold if applicable
         indices = np.argwhere(filter_diagonal_rl).flatten()  # Indices of the diagonal points
 
@@ -192,7 +195,8 @@ class LidarProcessing:
         self.y_rear_left = np.mean(y_points[indices])
 
 
-        filter_diagonal_rr = np.logical_and((y_points < 0), (x_points < 0))  
+        filter_diagonal_rr = np.logical_and((y_points < 0), (x_points < 0)) 
+        # filter_diagonal_rr = np.logical_and(filter_front, np.abs(x_points + y_points) < 0.414)
         filter_diagonal_rr = np.logical_and(filter_diagonal_rr, pixel_vals > 128)  # Pixel value threshold if applicable
         indices = np.argwhere(filter_diagonal_rr).flatten()  # Indices of the diagonal points
 
@@ -310,10 +314,10 @@ class LidarProcessing:
             rear_right = self.sensor_limit
         
         # 4 Directions
-        # return [front*100, right*100, rear*100, left*100]
+        return [front*100, right*100, rear*100, left*100]
         
         # 8 Directions
-        return [front*100, right*100, rear*100, left*100, front_left * 100, front_right * 100, rear_left*100, rear_right*100]
+        # return [front*100, right*100, rear*100, left*100, front_left * 100, front_right * 100, rear_left*100, rear_right*100]
 
 
         

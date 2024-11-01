@@ -7,8 +7,11 @@ from gazebo_msgs.srv import GetModelState
 import shutil
 from std_msgs.msg import Float32MultiArray
 from scipy.integrate import ode
+import matplotlib.pyplot as plt
+
 
 import random
+
 
 def vehicle_dynamics(t, vars, vr, delta):
     curr_x = vars[0]
@@ -31,14 +34,13 @@ class particleFilter:
         for i in range(num_particles):
 
             # # (Default) The whole map
-            # x = np.random.uniform(0, world.width)
-            # y = np.random.uniform(0, world.height)
+            x = np.random.uniform(0, world.width)
+            y = np.random.uniform(0, world.height)
 
 
-            ## first quadrant
-            x = np.random.uniform(world.width/2, world.width)
-            y = np.random.uniform(world.height/2, world.height)
-            # we temporaryly picked the upper right 1/4 of the blue area of figure 3
+            # first quadrant
+            # x = np.random.uniform(world.width/2, world.width)
+            # y = np.random.uniform(world.height/2, world.height)
 
             particles.append(Particle(x = x, y = y, maze = world, sensor_limit = sensor_limit))
 
@@ -111,9 +113,6 @@ class particleFilter:
         else:
             for particle in self.particles:
                 particle.weight /= total_weight
-        
-        ###############
-
 
     def resampleParticle(self):
         """
@@ -123,93 +122,100 @@ class particleFilter:
         particles_new = list()
 
         ## TODO #####
+        
+        cumulative_weights = np.cumsum([particle.weight for particle in self.particles])
+        random_numbers = np.random.rand(len(self.particles))
+        cnt=0
+        for num in random_numbers:
+            idx = np.searchsorted(cumulative_weights, num)
+            cnt+=1
 
-        weights = []
-        for p in self.particles:
-            w = p.weight
-            weights.append(w)
-
-        norm_weights = np.array(weights, dtype=np.float64)
-        weights_sum = np.cumsum(norm_weights)
-        rnd = np.random.rand(len(self.particles))
-        for i in rnd:
-            index = np.searchsorted(weights_sum, i)
-            particle = self.particles[index]
-            particles_new.append(Particle(x = particle.x, 
-                                          y = particle.y, 
-                                          heading = particle.heading, 
-                                          maze = self.world, 
-                                          weight = 1, 
-                                          sensor_limit = particle.sensor_limit,  
-                                          noisy = True)) # noisy = True
-
+            particles_new.append(Particle(x = self.particles[idx].x, y = self.particles[idx].y, maze = self.world, heading = self.particles[idx].heading,sensor_limit = self.sensor_limit, weight=1, noisy = True))
+        self.particles = particles_new
+  
         ###############
 
-        self.particles = particles_new
-
-
-    from scipy.integrate import ode
 
     def particleMotionModel(self):
         """
         Description:
-            Estimate the next state for each particle according to the control input from actual robot.
-            Uses the ode integrator to simulate motion over the list of control inputs in self.control.
+            Estimate the next state for each particle according to the control input from actual robot 
+            You can either use ode function or vehicle_dynamics function provided above
         """
-        if len(self.control) == 0:
-            return  # If no control input is available, skip the motion model
+        ## TODO ####
 
-        # Iterate over each particle
-        for particle in self.particles:
+        if self.control:
+            for i in range(self.num_particles):
+                x = self.particles[i].x
+                y = self.particles[i].y
+                theta = self.particles[i].heading
+                for con in self.control:
+                    v = con[0]
+                    delta = con[1]
+                    x += v * np.cos(theta) * 0.01
+                    y += v * np.sin(theta) * 0.01
+                    theta += delta * 0.01
+                self.particles[i].x = x
+                self.particles[i].y = y
+                self.particles[i].heading = theta
 
-            p_var = [particle.x, particle.y, particle.heading]
-            integrator = ode(vehicle_dynamics).set_integrator('vode')
-            integrator.set_initial_value([particle.x, particle.y, particle.heading], 0)
-
-            for param in self.control:
-                v, delta = param
-                integrator.set_f_params(integrator.t, p_var, v, delta)
-                integrator.integrate(integrator.t + 0.01)
-                p_var = integrator.y
-
-            particle.x, particle.y, particle.heading = p_var
-            
-        # Clear the control list after applying them
         self.control = []
 
 
-    
+        ###############
+        # pass
+
     def runFilter(self):
         """
         Description:
             Run PF localization
         """
-        """
-        The algorithm will be implemented in the runFilter function. The steps in this function are straightforward.
-        You only need to constantly loop through the steps as shown in 3. Suppose p = {p1 . . . pn} are the particles
-        representing the current distribution:
-        def runFilter
-        while True :
-        sampleMotionModel (p)
-        reading = vehicle_read_sensor()
-        updateWeight (p , reading)
-        p = resampleParticle(p)
-        """
         count = 0 
+        pos_errors = []
+        heading_errors = []
         while True:
             ## TODO: (i) Implement Section 3.2.2. (ii) Display robot and particles on map. (iii) Compute and save position/heading error to plot. #####
-            
-            self.particleMotionModel()
-            reading = self.bob.read_sensor()
-            self.updateWeight(reading)
-            self.resampleParticle()
+            while True:
+                self.particleMotionModel()
+                reading = self.bob.read_sensor()
+                self.updateWeight(reading)
+                self.resampleParticle()
 
-            self.world.clear_objects()
-            self.world.show_particles(self.particles)
-            self.world.show_estimated_location(self.particles)
-            self.world.show_robot(self.bob)
+                self.world.clear_objects()
+                self.world.show_robot(self.bob)
+                self.world.show_particles(self.particles)
+                estimate_x, estimate_y, estimate_heading = self.world.show_estimated_location(self.particles)
 
-            
-            count += 1
+                actual_x = self.bob.x
+                actual_y = self.bob.y
+                actual_heading = self.bob.heading
+                pos_err = np.sqrt((estimate_x - actual_x) ** 2 + (estimate_y - actual_y) ** 2)
+                diff = np.abs(estimate_heading - actual_heading * 180/np.pi) % 360
+                heading_err = diff if diff <= 180 else (180 - diff)
+                pos_errors.append(pos_err)
+                heading_errors.append(heading_err)
+                count+=1
+                if count > 900:  
+                    break
+                # else:
+                #     print(count)
+
+            # Plot Position Error (Euclidean Distance)
+            plt.figure()
+            plt.plot(range(len(pos_errors)), pos_errors)
+            plt.title("Position Estimation Error Over Iterations")
+            plt.xlabel("Iteration")
+            plt.ylabel("Position Error (Euclidean Distance)")
+            plt.show()
+
+            # Plot Heading Error
+            plt.figure()
+            plt.plot(range(len(heading_errors)), heading_errors)
+            plt.title("Orientation Estimation Error Over Iterations")
+            plt.xlabel("Iteration")
+            plt.ylabel("Heading Error (Degrees)")
+            plt.show()
+                
+            break  # Exit the outer loop after plotting
 
             ###############

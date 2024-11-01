@@ -280,8 +280,8 @@ class Maze(object):
         pos_x = x
         pos_y = y
         d7 = 0
-        dx = np.cos(orientation-np.pi-np.pi/4) * 1 - np.sin(orientation-np.pi-np.pi/4) * 0
-        dy = np.sin(orientation-np.pi-np.pi/4) * 1 + np.cos(orientation-np.pi-np.pi/4) * 0
+        dx = np.cos(orientation+3*np.pi/4) * 1 - np.sin(orientation+3*np.pi/4) * 0
+        dy = np.sin(orientation+3*np.pi/4) * 1 + np.cos(orientation+3*np.pi/4) * 0
         while not self.colide_wall(int(round(pos_y)),int(round(pos_x))) and d7 < sensor_limit:
             pos_x = pos_x + dx
             pos_y = pos_y + dy
@@ -292,8 +292,8 @@ class Maze(object):
         pos_x = x
         pos_y = y
         d8 = 0
-        dx = np.cos(orientation-np.pi+np.pi/4) * 1 - np.sin(orientation-np.pi+np.pi/4) * 0
-        dy = np.sin(orientation-np.pi+np.pi/4) * 1 + np.cos(orientation-np.pi+np.pi/4) * 0
+        dx = np.cos(orientation-3*np.pi/4) * 1 - np.sin(orientation-3*np.pi/4) * 0
+        dy = np.sin(orientation-3*np.pi/4) * 1 + np.cos(orientation-3*np.pi/4) * 0
         while not self.colide_wall(int(round(pos_y)),int(round(pos_x))) and d8 < sensor_limit:
             pos_x = pos_x + dx
             pos_y = pos_y + dy
@@ -305,11 +305,11 @@ class Maze(object):
 
         # Return readings from sensor model in front, right, rear, left direction
         # 4 Directions
-        # return [d1*100, d2*100, d3*100, d4*100]
+        return [d1*100, d2*100, d3*100, d4*100]
 
         # front_left, front_right, rear_left, rear_right
         # 8 Directions
-        return [d1*100, d2*100, d3*100, d4*100, d5*100, d6*100, d7*100, d8*100]
+        # return [d1*100, d2*100, d3*100, d4*100, d5*100, d6*100, d7*100, d8*100]
 
 
 class Particle(object):
