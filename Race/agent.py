@@ -172,7 +172,29 @@ class Agent():
                 control.brake = 0.0
                 control.throttle = max(0.4, 0.7 - ego_vel / 50.0)  # 限制速度增长
         else:
-            if len(waypoints) > 2:
+            # if len(waypoints) > 2:
+            #     wp1 = np.array([waypoints[0][0], waypoints[0][1]])
+            #     wp2 = np.array([waypoints[1][0], waypoints[1][1]])
+            #     wp3 = np.array([waypoints[2][0], waypoints[2][1]])
+
+            #     # Compute vectors
+            #     vec1 = wp2 - wp1
+            #     vec2 = wp3 - wp2
+
+            #     # Calculate the angle between the two vectors
+            #     dot_product = np.dot(vec1, vec2)
+            #     norm_product = np.linalg.norm(vec1) * np.linalg.norm(vec2)
+
+            #     # Avoid division by zero
+            #     if norm_product > 0:
+            #         curvature = np.arccos(np.clip(dot_product / norm_product, -1.0, 1.0))
+            #         # print(curvature)
+            #     else:
+            #         curvature = 0.0
+            # else:
+            #     curvature = 0.0
+
+            if len(waypoints) > 5:
                 wp1 = np.array([waypoints[0][0], waypoints[0][1]])
                 wp2 = np.array([waypoints[1][0], waypoints[1][1]])
                 wp3 = np.array([waypoints[2][0], waypoints[2][1]])
@@ -188,8 +210,33 @@ class Agent():
                 # Avoid division by zero
                 if norm_product > 0:
                     curvature = np.arccos(np.clip(dot_product / norm_product, -1.0, 1.0))
+                    # print(curvature)
                 else:
                     curvature = 0.0
+
+                # 11/30 added future curvature calc by [3][4][5]th waypoints
+                wp4 = np.array([waypoints[3][0], waypoints[3][1]])
+                wp5 = np.array([waypoints[4][0], waypoints[4][1]])
+                wp6 = np.array([waypoints[5][0], waypoints[5][1]])
+
+                # Compute vectors
+                vec3 = wp5 - wp4
+                vec4 = wp6 - wp5
+
+                # Calculate the angle between the two vectors
+                future_dot_product = np.dot(vec3, vec4)
+                future_norm_product = np.linalg.norm(vec3) * np.linalg.norm(vec4)
+
+                # Avoid division by zero
+                if future_norm_product > 0:
+                    future_curvature = np.arccos(np.clip(future_dot_product / future_norm_product, -1.0, 1.0))
+                    # print(curvature)
+                else:
+                    future_curvature = 0.0
+
+
+
+            
             else:
                 curvature = 0.0
 
@@ -197,31 +244,86 @@ class Agent():
             curvature_brake_threshold = np.radians(30)  # Braking for very sharp turns (~30 degrees or more)
             curvature_throttle_threshold = np.radians(10)  # Reduce throttle for moderate turns (~10 degrees or more)
 
+
             # Determine throttle and braking based on curvature
-            if curvature > curvature_brake_threshold:
-                # Excessive curvature, apply brakes
-                if ego_vel > 7.0:
-                    control.throttle = 0.0
-                    control.brake = 0.9  # Full brake
+            # if curvature > curvature_brake_threshold:
+            #     # Excessive curvature, apply brakes
+            #     if ego_vel > 7:
+            #         control.throttle = 0.0
+            #         control.brake = 0.8  # Full brake
+            #     else:
+            #         control.throttle = 0.9
+            #         control.brake = 0.0
+            # elif curvature > curvature_throttle_threshold:
+            #     # Moderate curvature, reduce throttle
+            #     throttle_value = max(0.5, 1.0 - curvature * 2.0)  # Adjust sensitivity with the multiplier
+            #     control.throttle = throttle_value
+            #     control.brake = 0.0
+            # else:
+            #     if ego_vel >= 35:
+            #         control.throttle = 0.75
+            #         control.brake = 0.0
+            #     else:
+            #         if ego_vel < 20:
+            #             control.throttle = 0.9
+            #             control.brake = 0.0
+            #         else:
+            #             control.throttle = 0.8
+            #             control.brake = 0.0
+
+            # 11/30 modified more fine grainded threshold
+            if future_curvature > 0.7:
+               if ego_vel > 5.0:
+                   control.throttle = 0.0
+                   control.brake = 0.9  # Full brake
+               else:
+                   control.throttle = 0.4
+                   control.brake = 0.0
+        
+            elif curvature > 0.8:
+                if ego_vel > 10.0:
+                   control.throttle = 0.1
+                   control.brake = 0.9  # Full brake
                 else:
-                    control.throttle = 0.8
-                    control.brake = 0.0
-            elif curvature > curvature_throttle_threshold:
-                # Moderate curvature, reduce throttle
-                throttle_value = max(0.5, 1.0 - curvature * 2.0)  # Adjust sensitivity with the multiplier
-                control.throttle = throttle_value
-                control.brake = 0.0
+                   control.throttle = 0.4
+                   control.brake = 0.0
+
+            elif curvature > 0.6:
+                if ego_vel > 30.0:
+                   control.throttle = 0.1
+                   control.brake = 0.9  # Full brake
+                else:
+                   control.throttle = 0.5
+                   control.brake = 0.0
+
+            elif curvature > 0.4:
+               if ego_vel > 50.0:
+                   control.throttle = 0.1
+                   control.brake = 0.9  # Full brake
+               else:
+                   control.throttle = 0.6
+                   control.brake = 0.0
+
+            elif curvature > 0.2:
+               if ego_vel > 70.0:
+                   control.throttle = 0.1
+                   control.brake = 0.7
+               else:
+                   control.throttle = 0.7
+                   control.brake = 0.0
+
             else:
-                if ego_vel >= 35:
-                    control.throttle = 0.7
-                    control.brake = 0.0
-                else:
-                    if ego_vel < 20:
-                        control.throttle = 0.95
-                        control.brake = 0.0
-                    else:
-                        control.throttle = 0.8
-                        control.brake = 0.0
+               if ego_vel >= 35:
+                   control.throttle = 0.75
+                   control.brake = 0.0
+               else:
+                   if ego_vel < 20:
+                       control.throttle = 0.9
+                       control.brake = 0.0
+                   else:
+                       control.throttle = 0.8
+                       control.brake = 0.0
+
 
         
         # 6. Boundary Check (Stay within the track boundaries)
