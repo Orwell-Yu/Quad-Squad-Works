@@ -1,0 +1,7 @@
+Time: 52.53, Collision Actor ID: 809, Collision Actor Type: vehicle.audi.a2
+Time: 61.83, Collision Actor ID: 813, Collision Actor Type: vehicle.audi.a2
+Time: 92.48, Collision Actor ID: 825, Collision Actor Type: vehicle.tesla.model3
+Time: 83.78, Collision Actor ID: 870, Collision Actor Type: vehicle.tesla.model3
+Time: 85.72, Collision Actor ID: 927, Collision Actor Type: vehicle.tesla.model3
+Time: 7.66, Collision Actor ID: 31, Collision Actor Type: vehicle.audi.a2
+Time: 85.91, Collision Actor ID: 67, Collision Actor Type: vehicle.tesla.model3
