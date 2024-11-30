@@ -85,6 +85,8 @@ class Agent():
         ego_yaw = transform.rotation.yaw
         ego_vel = math.sqrt(vel.x ** 2 + vel.y ** 2 + vel.z ** 2)
         
+
+
         # 2. Determine Target Waypoint
         target_waypoint = waypoints[0]
         target_x, target_y = target_waypoint[0], target_waypoint[1]
@@ -198,11 +200,11 @@ class Agent():
             # Determine throttle and braking based on curvature
             if curvature > curvature_brake_threshold:
                 # Excessive curvature, apply brakes
-                if ego_vel > 5.0:
-                    control.throttle = 0.1
+                if ego_vel > 7.0:
+                    control.throttle = 0.0
                     control.brake = 0.9  # Full brake
                 else:
-                    control.throttle = 0.6
+                    control.throttle = 0.8
                     control.brake = 0.0
             elif curvature > curvature_throttle_threshold:
                 # Moderate curvature, reduce throttle
@@ -211,14 +213,14 @@ class Agent():
                 control.brake = 0.0
             else:
                 if ego_vel >= 35:
-                    control.throttle = 0.5
+                    control.throttle = 0.7
                     control.brake = 0.0
                 else:
                     if ego_vel < 20:
-                        control.throttle = 0.85
+                        control.throttle = 0.95
                         control.brake = 0.0
                     else:
-                        control.throttle = 0.75
+                        control.throttle = 0.8
                         control.brake = 0.0
 
         
@@ -242,7 +244,6 @@ class Agent():
 
         # Return the control commands
         return control
-
 
 
     def plan_path_with_rrt(self, start_location, waypoints, obstacles, boundary):

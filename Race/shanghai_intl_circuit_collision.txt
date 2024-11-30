@@ -5,3 +5,12 @@ Time: 83.78, Collision Actor ID: 870, Collision Actor Type: vehicle.tesla.model3
 Time: 85.72, Collision Actor ID: 927, Collision Actor Type: vehicle.tesla.model3
 Time: 7.66, Collision Actor ID: 31, Collision Actor Type: vehicle.audi.a2
 Time: 85.91, Collision Actor ID: 67, Collision Actor Type: vehicle.tesla.model3
+Time: 48.73, Collision Actor ID: 0, Collision Actor Type: static.terrain
+Time: 49.3, Collision Actor ID: 0, Collision Actor Type: static.terrain
+Time: 38.07, Collision Actor ID: 0, Collision Actor Type: static.terrain
+Time: 13.37, Collision Actor ID: 0, Collision Actor Type: static.terrain
+Time: 16.46, Collision Actor ID: 0, Collision Actor Type: static.terrain
+Time: 48.44, Collision Actor ID: 0, Collision Actor Type: static.terrain
+Time: 49.41, Collision Actor ID: 0, Collision Actor Type: static.terrain
+Time: 49.86, Collision Actor ID: 0, Collision Actor Type: static.terrain
+Time: 49.58, Collision Actor ID: 0, Collision Actor Type: static.terrain
