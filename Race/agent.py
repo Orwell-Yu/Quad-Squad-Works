@@ -482,42 +482,42 @@ class Agent():
 
             # 结合曲率和速度调整
             if curvature > np.radians(40) or future_curvature > np.radians(40):  # 非常急的弯道
-                if ego_vel > 5.0:  # 高速情况
+                if ego_vel > 3.0:  # 高速情况
                     control.throttle = 0.0
                     control.brake = 1.0  # 强制刹车
                 else:  # 低速情况
                     control.throttle = 0.2
-                    control.brake = 0.5  # 保持低速通过
+                    control.brake = 0.0  # 保持低速通过
             elif curvature > np.radians(30) or future_curvature > np.radians(30):  # 急弯
-                if ego_vel > 7.50:  # 高速情况
+                if ego_vel > 5.0:  # 高速情况
                     control.throttle = 0.0
                     control.brake = 0.9  # 强力刹车
                 else:
                     control.throttle = 0.3
-                    control.brake = 0.4  # 控制速度
+                    control.brake = 0.0  # 控制速度
             elif curvature > np.radians(20) or future_curvature > np.radians(20):  # 中等弯道
-                if ego_vel > 20.0/2:  # 高速情况
-                    control.throttle = 0.2
-                    control.brake = 0.7  # 减速通过
+                if ego_vel > 8.0:  # 高速情况
+                    control.throttle = 0.0
+                    control.brake = 0.8  # 减速通过
                 else:
-                    control.throttle = 0.5
-                    control.brake = 0.2  # 保持平稳
+                    control.throttle = 0.4
+                    control.brake = 0.0  # 保持平稳
             elif curvature > np.radians(10) or future_curvature > np.radians(10):  # 小弯道
-                if ego_vel > 30.0/2:  # 高速情况
-                    control.throttle = 0.2
-                    control.brake = 0.7  # 轻刹车
+                if ego_vel > 12.0:  # 高速情况
+                    control.throttle = 0.0
+                    control.brake = 0.6  # 轻刹车
                 else:
-                    control.throttle = 0.7
-                    control.brake = 0.1  # 小幅减速
+                    control.throttle = 0.6
+                    control.brake = 0.4  # 小幅减速
             else:  # 直道或平缓曲率
-                if ego_vel > 25.0:  # 高速时限制加速
-                    control.throttle = 0.5
+                if ego_vel > 20.0:  # 高速时限制加速
+                    control.throttle = 0.7
                     control.brake = 0.0
-                elif ego_vel < 15.0:  # 低速时快速加速
-                    control.throttle = 1.0
+                elif ego_vel < 10.0:  # 低速时快速加速
+                    control.throttle = 0.8
                     control.brake = 0.0
                 else:  # 中速保持
-                    control.throttle = 0.8
+                    control.throttle = 0.6
                     control.brake = 0.0
 
         # 6. 返回控制指令
