@@ -4,6 +4,8 @@ import numpy as np
 import math
 import random
 import math
+import matplotlib.pyplot as plt
+from matplotlib.patches import Circle, Rectangle
 
 
 class RRTNode:
@@ -52,338 +54,589 @@ class Agent():
         self.step_size = 0.1
         self.max_iterations = 500
 
+    # def run_step(self, filtered_obstacles, waypoints, vel, transform, boundary):
+    #     """
+    #     Execute one step of navigation.
+
+    #     Args:
+    #     filtered_obstacles
+    #         - Type:        List[carla.Actor(), ...]
+    #         - Description: All actors except for EGO within sensoring distance
+    #     waypoints 
+    #         - Type:         List[[x,y,z], ...] 
+    #         - Description:  List All future waypoints to reach in (x,y,z) format
+    #     vel
+    #         - Type:         carla.Vector3D 
+    #         - Description:  Ego's current velocity in (x, y, z) in m/s
+    #     transform
+    #         - Type:         carla.Transform 
+    #         - Description:  Ego's current transform
+    #     boundary 
+    #         - Type:         List[List[left_boundry], List[right_boundry]]
+    #         - Description:  left/right boundary each consists of 20 waypoints,
+    #                         they defines the track boundary of the next 20 meters.
+
+    #     Return: carla.VehicleControl()
+    #     """
+    #     control = carla.VehicleControl()
+
+
+    #     # 1. Get Ego Vehicle Position
+    #     ego_location = transform.location
+    #     ego_x, ego_y = ego_location.x, ego_location.y
+    #     ego_yaw = transform.rotation.yaw
+    #     ego_vel = math.sqrt(vel.x ** 2 + vel.y ** 2 + vel.z ** 2)
+        
+
+
+    #     # 2. Determine Target Waypoint
+    #     target_waypoint = waypoints[0]
+    #     target_x, target_y = target_waypoint[0], target_waypoint[1]
+
+    #     # 3. Check for Obstacles and Plan Path Using RRT
+    #     min_distance_to_obstacle = float('inf')
+    #     obstacle_in_front = False
+    #     for obstacle in filtered_obstacles:
+    #         obstacle_location = obstacle.get_location()
+    #         obstacle_x, obstacle_y = obstacle_location.x, obstacle_location.y
+            
+    #         obstacle_distance = math.sqrt(
+    #             (obstacle_x - ego_x) ** 2 + (obstacle_y - ego_y) ** 2
+    #         )
+            
+    #         # Check if the obstacle is in front
+    #         if is_obstacle_in_front(ego_x, ego_y, ego_yaw, obstacle_x, obstacle_y):
+    #             obstacle_in_front = True
+    #             min_distance_to_obstacle = min(min_distance_to_obstacle, obstacle_distance)
+        
+    #     # If obstacles are detected within a certain range, use RRT to plan a path
+    #     if obstacle_in_front and min_distance_to_obstacle < 10.0:
+    #         # Abstract RRT Planner function to avoid obstacles
+    #         planned_path = self.plan_path_with_rrt(ego_location, waypoints, filtered_obstacles, boundary)
+            
+    #         # Use the first point in the planned path as the new target
+    #         if planned_path:
+    #             target_x, target_y = planned_path[0][0], planned_path[0][1]
+
+    #     # 3. Calculate Distance and Angle to Target Waypoint
+    #     dx = target_x - ego_x
+    #     dy = target_y - ego_y
+    #     distance_to_target = math.sqrt(dx**2 + dy**2)
+    #     angle_to_target = math.degrees(math.atan2(dy, dx))
+        
+    #     # 4. Calculate Steering Angle (Simple Proportional Controller)
+    #     angle_diff = angle_to_target - ego_yaw
+    #     while angle_diff > 180:
+    #         angle_diff -= 360
+    #     while angle_diff < -180:
+    #         angle_diff += 360
+        
+    #     # Normalize the steering value to [-1, 1]
+    #     max_steering_angle = 45.0
+    #     control.steer = max(-1.0, min(1.0, angle_diff / max_steering_angle))
+
+    #     # 5. Speed Control
+    #     # Reduce speed if an obstacle is within 10 meters
+    #     min_distance_to_obstacle = float('inf')
+    #     obstacle_in_front = False
+    #     for obstacle in filtered_obstacles:
+    #         obstacle_location = obstacle.get_location()
+    #         obstacle_x, obstacle_y = obstacle_location.x, obstacle_location.y
+            
+    #         obstacle_distance = math.sqrt(
+    #             (obstacle_x - ego_x) ** 2 + (obstacle_y - ego_y) ** 2
+    #         )
+            
+    #         # Check if the obstacle is in front
+    #         if is_obstacle_in_front(ego_x, ego_y, ego_yaw, obstacle_x, obstacle_y):
+    #             obstacle_in_front = True
+    #             min_distance_to_obstacle = min(min_distance_to_obstacle, obstacle_distance)
+        
+
+    #     if obstacle_in_front:
+    #         if min_distance_to_obstacle < 20.0:
+    #             # 高速时动态计算刹车和油门
+    #             if ego_vel > 30.0:  # 高速
+    #                 if min_distance_to_obstacle < 10.0:
+    #                     control.brake = min(1.0, 1.0 - (min_distance_to_obstacle / 10.0))  # 强制全刹车
+    #                     control.throttle = 0.0
+    #                 else:
+    #                     control.brake = min(0.7, 0.7 - (min_distance_to_obstacle / 20.0))  # 中等刹车
+    #                     control.throttle = max(0.2, 0.5 - (20.0 - min_distance_to_obstacle) / 20.0)
+    #             else:  # 中低速
+    #                 if min_distance_to_obstacle < 10.0:
+    #                     control.brake = min(1.0, 1.0 - (min_distance_to_obstacle / 10.0))
+    #                     control.throttle = 0.0
+    #                 else:
+    #                     control.brake = min(0.5, 0.5 - (min_distance_to_obstacle / 20.0))
+    #                     control.throttle = max(0.3, 0.6 - (20.0 - min_distance_to_obstacle) / 20.0)
+    #         else:
+    #             # 障碍物在20米以外，限制速度但不刹车
+    #             control.brake = 0.0
+    #             control.throttle = max(0.4, 0.7 - ego_vel / 50.0)  # 限制速度增长
+    #     else:
+    #         # if len(waypoints) > 2:
+    #         #     wp1 = np.array([waypoints[0][0], waypoints[0][1]])
+    #         #     wp2 = np.array([waypoints[1][0], waypoints[1][1]])
+    #         #     wp3 = np.array([waypoints[2][0], waypoints[2][1]])
+
+    #         #     # Compute vectors
+    #         #     vec1 = wp2 - wp1
+    #         #     vec2 = wp3 - wp2
+
+    #         #     # Calculate the angle between the two vectors
+    #         #     dot_product = np.dot(vec1, vec2)
+    #         #     norm_product = np.linalg.norm(vec1) * np.linalg.norm(vec2)
+
+    #         #     # Avoid division by zero
+    #         #     if norm_product > 0:
+    #         #         curvature = np.arccos(np.clip(dot_product / norm_product, -1.0, 1.0))
+    #         #         # print(curvature)
+    #         #     else:
+    #         #         curvature = 0.0
+    #         # else:
+    #         #     curvature = 0.0
+
+    #         # Initialize curvature values
+    #         # curvature = 0.0
+    #         # future_curvature = 0.0  # Add this to avoid UnboundLocalError
+    #         # # cur_pos = self.vehicle.get_location()
+    #         # # print(cur_pos)
+    #         # pos=(ego_x,ego_y)
+    #         # print(pos)
+
+    #         # if len(waypoints) > 5:
+    #         #     wp1 = np.array([waypoints[0][0], waypoints[0][1]])
+    #         #     wp2 = np.array([waypoints[1][0], waypoints[1][1]])
+    #         #     wp3 = np.array([waypoints[2][0], waypoints[2][1]])
+
+    #         #     # Compute vectors
+    #         #     vec1 = wp1 - pos
+    #         #     vec2 = wp2 - wp1
+
+    #         #     # Calculate the angle between the two vectors
+    #         #     dot_product = np.dot(vec1, vec2)
+    #         #     norm_product = np.linalg.norm(vec1) * np.linalg.norm(vec2)
+
+    #         #     # Avoid division by zero
+    #         #     if norm_product > 0:
+    #         #         curvature = np.arccos(np.clip(dot_product / norm_product, -1.0, 1.0))
+    #         #     else:
+    #         #         curvature = 0.0
+
+    #         #     # Calculate future curvature using waypoints 3, 4, 5
+    #         #     wp4 = np.array([waypoints[3][0], waypoints[3][1]])
+    #         #     wp5 = np.array([waypoints[4][0], waypoints[4][1]])
+    #         #     wp6 = np.array([waypoints[5][0], waypoints[5][1]])
+
+    #         #     vec3 = wp4 - wp3
+    #         #     vec4 = wp5 - wp4
+
+    #         #     future_dot_product = np.dot(vec3, vec4)
+    #         #     future_norm_product = np.linalg.norm(vec3) * np.linalg.norm(vec4)
+
+    #         #     if future_norm_product > 0:
+    #         #         future_curvature = np.arccos(np.clip(future_dot_product / future_norm_product, -1.0, 1.0))
+    #         #     else:
+    #         #         future_curvature = 0.0
+
+    #         left_boundary = boundary[0]
+    #         right_boundary = boundary[1]
+    #         # print(left_boundary)
+    #         # print(right_boundary)
+
+    #         if len(left_boundary) >= 3 and len(right_boundary) >= 3:
+    #             # Take three consecutive points from the left boundary for curvature approximation
+    #             left_p1 = np.array([left_boundary[0].transform.location.x, left_boundary[0].transform.location.y])
+    #             left_p2 = np.array([left_boundary[5].transform.location.x, left_boundary[5].transform.location.y])
+    #             left_p3 = np.array([left_boundary[10].transform.location.x, left_boundary[10].transform.location.y])
+
+    #             # Take three consecutive points from the right boundary for curvature approximation
+    #             right_p1 = np.array([right_boundary[0].transform.location.x, right_boundary[0].transform.location.y])
+    #             right_p2 = np.array([right_boundary[5].transform.location.x, right_boundary[5].transform.location.y])
+    #             right_p3 = np.array([right_boundary[10].transform.location.x, right_boundary[10].transform.location.y])
+
+    #             # Compute vectors and curvature for the centerline
+    #             center_p1 = (left_p1 + right_p1) / 2
+    #             center_p2 = (left_p2 + right_p2) / 2
+    #             center_p3 = (left_p3 + right_p3) / 2
+
+    #             vec1 = center_p2 - center_p1
+    #             vec2 = center_p3 - center_p2
+
+    #             dot_product = np.dot(vec1, vec2)
+    #             norm_product = np.linalg.norm(vec1) * np.linalg.norm(vec2)
+
+    #             # Avoid division by zero
+    #             curvature = 0.0
+    #             if norm_product > 0:
+    #                 curvature = np.arccos(np.clip(dot_product / norm_product, -1.0, 1.0))
+
+    #         else:
+    #             curvature = 0.0  # Default curvature if boundary data is insufficient
+
+    #         if len(left_boundary) >= 6 and len(right_boundary) >= 6:
+
+    #             # Compute future curvature using the next three boundary points
+    #             left_p4 = np.array([left_boundary[35].transform.location.x, left_boundary[35].transform.location.y])
+    #             left_p5 = np.array([left_boundary[40].transform.location.x, left_boundary[40].transform.location.y])
+    #             left_p6 = np.array([left_boundary[45].transform.location.x, left_boundary[45].transform.location.y])
+
+    #             right_p4 = np.array([right_boundary[35].transform.location.x, right_boundary[35].transform.location.y])
+    #             right_p5 = np.array([right_boundary[40].transform.location.x, right_boundary[40].transform.location.y])
+    #             right_p6 = np.array([right_boundary[45].transform.location.x, right_boundary[45].transform.location.y])
+
+    #             center_p4 = (left_p4 + right_p4) / 2
+    #             center_p5 = (left_p5 + right_p5) / 2
+    #             center_p6 = (left_p6 + right_p6) / 2
+
+    #             vec3 = center_p5 - center_p4
+    #             vec4 = center_p6 - center_p5
+
+    #             future_dot_product = np.dot(vec3, vec4)
+    #             future_norm_product = np.linalg.norm(vec3) * np.linalg.norm(vec4)
+
+    #             future_curvature = 0.0
+    #             if future_norm_product > 0:
+    #                 future_curvature = np.arccos(np.clip(future_dot_product / future_norm_product, -1.0, 1.0))
+    #         else:
+    #             future_curvature = 0.0
+
+    #         # Set thresholds for curvature
+    #         curvature_brake_threshold = np.radians(30)  # Braking for very sharp turns (~30 degrees or more)
+    #         curvature_throttle_threshold = np.radians(10)  # Reduce throttle for moderate turns (~10 degrees or more)
+
+    #         print(curvature)
+    #         print(future_curvature)
+    #         print("----------------------")
+
+    #         # Determine throttle and braking based on curvature
+    #         # if curvature > curvature_brake_threshold:
+    #             # Excessive curvature, apply brakes
+    #         #     if ego_vel > 7:
+    #         #         control.throttle = 0.0
+    #         #         control.brake = 0.8  # Full brake
+    #         #     else:
+    #         #         control.throttle = 0.9
+    #         #         control.brake = 0.0
+    #         # elif curvature > curvature_throttle_threshold:
+    #         #     # Moderate curvature, reduce throttle
+    #         #     throttle_value = max(0.5, 1.0 - curvature * 2.0)  # Adjust sensitivity with the multiplier
+    #         #     control.throttle = throttle_value
+    #         #     control.brake = 0.0
+    #         # else:
+    #         #     if ego_vel >= 35:
+    #         #         control.throttle = 0.75
+    #         #         control.brake = 0.0
+    #         #     else:
+    #         #         if ego_vel < 20:
+    #         #             control.throttle = 0.9
+    #         #             control.brake = 0.0
+    #         #         else:
+    #         #             control.throttle = 0.8
+    #         #             control.brake = 0.0
+
+    #         # if ego_vel < 15:
+    #         #     control.throttle = 0.3
+    #         #     control.brake = 0.0
+    #         # else:
+    #         #     control.throttle = 0.0
+    #         #     control.brake = 0.3
+
+    #         # 11/30 modified more fine grainded threshold
+            
+    #         if curvature > 0.3 and future_curvature > curvature:
+    #            if ego_vel > 10.0:
+    #                control.throttle = 0.0
+    #                control.brake = 0.95  # Full brake
+    #             #    print("0")
+    #            else:
+    #                control.throttle = 0.3
+    #                control.brake = 0.0
+    #             #    print("1")
+        
+    #         elif curvature > 0.2 and future_curvature > curvature:
+    #             if ego_vel > 15.0:
+    #                control.throttle = 0.2
+    #                control.brake = 0.8  # Full brake
+    #             #    print("2")
+    #             else:
+    #                control.throttle = 0.5
+    #                control.brake = 0.0
+    #             #    print("3")
+
+    #         elif curvature > 0.1:
+    #             if ego_vel > 30.0:
+    #                control.throttle = 0.3
+    #                control.brake = 0.8  # Full brake
+    #             #    print("4")
+    #             else:
+    #                control.throttle = 0.65
+    #                control.brake = 0.0
+    #             #    print("5")
+
+    #         elif curvature > 0.08:
+    #            if ego_vel > 50.0:
+    #                control.throttle = 0.3
+    #                control.brake = 0.75  # Full brake
+    #             #    print("6")
+    #            else:
+    #                control.throttle = 0.8
+    #                control.brake = 0.0
+    #             #    print("7")
+
+    #         # elif future_curvature > 0.08:
+    #         #    if ego_vel > 70.0:
+    #         #        control.throttle = 0.1
+    #         #        control.brake = 0.7
+    #         #    else:
+    #         #        control.throttle = 0.7
+    #         #        control.brake = 0.0
+
+    #         else:
+    #         #    if len(waypoints) > 5:
+    #             if ego_vel >= 90:
+    #                 control.throttle = 0.5
+    #                 control.brake = 0.0
+    #                 # print("8")
+    #             else:
+    #                 if ego_vel < 20:
+    #                     control.throttle = 0.75
+    #                     control.brake = 0.0
+    #                     # print("9")
+    #                     # print(curvature," ", wp1," ", wp2," ", wp3)
+    #                     # print(future_curvature," ", wp4," ", wp5," ", wp6)
+    #                     # print("-------------")
+    #                 else:
+    #                     control.throttle = 0.75
+    #                     control.brake = 0.0
+    #                     # print("10")
+    #                     # print(curvature," ", wp1," ", wp2," ", wp3)
+    #                     # print(future_curvature," ", wp4," ", wp5," ", wp6)
+    #                     # print("-------------")
+
+
+        
+    #     # 6. Boundary Check (Stay within the track boundaries)
+    #     left_boundary = boundary[0]
+    #     right_boundary = boundary[1]
+    #     left_boundary_x = left_boundary[0].transform.location.x
+    #     left_boundary_y = left_boundary[0].transform.location.y
+    #     right_boundary_x = right_boundary[0].transform.location.x
+    #     right_boundary_y = right_boundary[0].transform.location.y
+
+    #     # Check distance to left and right boundaries
+    #     left_dist = math.sqrt((ego_x - left_boundary_x) ** 2 + (ego_y - left_boundary_y) ** 2)
+    #     right_dist = math.sqrt((ego_x - right_boundary_x) ** 2 + (ego_y - right_boundary_y) ** 2)
+
+    #     # If too close to a boundary, adjust steering
+    #     if left_dist < 0.8:
+    #         control.steer += 0.1  # Steer right
+    #     elif right_dist < 0.8:
+    #         control.steer -= 0.1  # Steer left
+
+    #     # Return the control commands
+    #     return control
+
     def run_step(self, filtered_obstacles, waypoints, vel, transform, boundary):
         """
-        Execute one step of navigation.
-
-        Args:
-        filtered_obstacles
-            - Type:        List[carla.Actor(), ...]
-            - Description: All actors except for EGO within sensoring distance
-        waypoints 
-            - Type:         List[[x,y,z], ...] 
-            - Description:  List All future waypoints to reach in (x,y,z) format
-        vel
-            - Type:         carla.Vector3D 
-            - Description:  Ego's current velocity in (x, y, z) in m/s
-        transform
-            - Type:         carla.Transform 
-            - Description:  Ego's current transform
-        boundary 
-            - Type:         List[List[left_boundry], List[right_boundry]]
-            - Description:  left/right boundary each consists of 20 waypoints,
-                            they defines the track boundary of the next 20 meters.
-
-        Return: carla.VehicleControl()
+        每次根据新的 boundary 数据动态计算 trajectory 并控制车辆移动
         """
         control = carla.VehicleControl()
 
-
-        # 1. Get Ego Vehicle Position
+        # 1. 获取 Ego 车辆的当前位置和状态
         ego_location = transform.location
         ego_x, ego_y = ego_location.x, ego_location.y
         ego_yaw = transform.rotation.yaw
         ego_vel = math.sqrt(vel.x ** 2 + vel.y ** 2 + vel.z ** 2)
-        
 
+        # 2. 根据 boundary 计算轨迹
+        trajectory = self.compute_local_trajectory(boundary)
 
-        # 2. Determine Target Waypoint
-        target_waypoint = waypoints[0]
-        target_x, target_y = target_waypoint[0], target_waypoint[1]
+        # 3. 找到离 Ego 最近的轨迹点作为目标点
+        closest_idx = min(
+            range(len(trajectory)),
+            key=lambda i: math.sqrt((trajectory[i][0] - ego_x) ** 2 + (trajectory[i][1] - ego_y) ** 2)
+        )
+        # 选取前方一个 "lookahead" 点
+        target_idx = min(closest_idx + 5, len(trajectory) - 1)
+        target_x, target_y = trajectory[target_idx][:2]
 
-        # 3. Check for Obstacles and Plan Path Using RRT
-        min_distance_to_obstacle = float('inf')
-        obstacle_in_front = False
-        for obstacle in filtered_obstacles:
-            obstacle_location = obstacle.get_location()
-            obstacle_x, obstacle_y = obstacle_location.x, obstacle_location.y
-            
-            obstacle_distance = math.sqrt(
-                (obstacle_x - ego_x) ** 2 + (obstacle_y - ego_y) ** 2
-            )
-            
-            # Check if the obstacle is in front
-            if is_obstacle_in_front(ego_x, ego_y, ego_yaw, obstacle_x, obstacle_y):
-                obstacle_in_front = True
-                min_distance_to_obstacle = min(min_distance_to_obstacle, obstacle_distance)
-        
-        # If obstacles are detected within a certain range, use RRT to plan a path
-        if obstacle_in_front and min_distance_to_obstacle < 10.0:
-            # Abstract RRT Planner function to avoid obstacles
-            planned_path = self.plan_path_with_rrt(ego_location, waypoints, filtered_obstacles, boundary)
-            
-            # Use the first point in the planned path as the new target
-            if planned_path:
-                target_x, target_y = planned_path[0][0], planned_path[0][1]
-
-        # 3. Calculate Distance and Angle to Target Waypoint
+        # 4. 计算方向角调整
         dx = target_x - ego_x
         dy = target_y - ego_y
-        distance_to_target = math.sqrt(dx**2 + dy**2)
         angle_to_target = math.degrees(math.atan2(dy, dx))
-        
-        # 4. Calculate Steering Angle (Simple Proportional Controller)
         angle_diff = angle_to_target - ego_yaw
         while angle_diff > 180:
             angle_diff -= 360
         while angle_diff < -180:
             angle_diff += 360
-        
-        # Normalize the steering value to [-1, 1]
-        control.steer = max(-1.0, min(1.0, angle_diff / 45.0))
 
-        # 5. Speed Control
-        # Reduce speed if an obstacle is within 10 meters
-        min_distance_to_obstacle = float('inf')
-        obstacle_in_front = False
-        for obstacle in filtered_obstacles:
-            obstacle_location = obstacle.get_location()
-            obstacle_x, obstacle_y = obstacle_location.x, obstacle_location.y
-            
-            obstacle_distance = math.sqrt(
-                (obstacle_x - ego_x) ** 2 + (obstacle_y - ego_y) ** 2
-            )
-            
-            # Check if the obstacle is in front
-            if is_obstacle_in_front(ego_x, ego_y, ego_yaw, obstacle_x, obstacle_y):
-                obstacle_in_front = True
-                min_distance_to_obstacle = min(min_distance_to_obstacle, obstacle_distance)
-        
+        max_steering_angle = 45.0
+        control.steer = max(-1.0, min(1.0, angle_diff / max_steering_angle))
 
-        if obstacle_in_front:
-            if min_distance_to_obstacle < 20.0:
-                # 高速时动态计算刹车和油门
-                if ego_vel > 30.0:  # 高速
-                    if min_distance_to_obstacle < 10.0:
-                        control.brake = min(1.0, 1.0 - (min_distance_to_obstacle / 10.0))  # 强制全刹车
-                        control.throttle = 0.0
-                    else:
-                        control.brake = min(0.7, 0.7 - (min_distance_to_obstacle / 20.0))  # 中等刹车
-                        control.throttle = max(0.2, 0.5 - (20.0 - min_distance_to_obstacle) / 20.0)
-                else:  # 中低速
-                    if min_distance_to_obstacle < 10.0:
-                        control.brake = min(1.0, 1.0 - (min_distance_to_obstacle / 10.0))
-                        control.throttle = 0.0
-                    else:
-                        control.brake = min(0.5, 0.5 - (min_distance_to_obstacle / 20.0))
-                        control.throttle = max(0.3, 0.6 - (20.0 - min_distance_to_obstacle) / 20.0)
-            else:
-                # 障碍物在20米以外，限制速度但不刹车
-                control.brake = 0.0
-                control.throttle = max(0.4, 0.7 - ego_vel / 50.0)  # 限制速度增长
-        else:
-            # if len(waypoints) > 2:
-            #     wp1 = np.array([waypoints[0][0], waypoints[0][1]])
-            #     wp2 = np.array([waypoints[1][0], waypoints[1][1]])
-            #     wp3 = np.array([waypoints[2][0], waypoints[2][1]])
+        # 5. 计算速度控制
+        if len(trajectory) > 2:
+            curvature = self.compute_curvature(trajectory, closest_idx)
+            future_curvature = self.compute_curvature(trajectory, closest_idx + 2) if closest_idx + 2 < len(trajectory) else curvature
 
-            #     # Compute vectors
-            #     vec1 = wp2 - wp1
-            #     vec2 = wp3 - wp2
-
-            #     # Calculate the angle between the two vectors
-            #     dot_product = np.dot(vec1, vec2)
-            #     norm_product = np.linalg.norm(vec1) * np.linalg.norm(vec2)
-
-            #     # Avoid division by zero
-            #     if norm_product > 0:
-            #         curvature = np.arccos(np.clip(dot_product / norm_product, -1.0, 1.0))
-            #         # print(curvature)
-            #     else:
-            #         curvature = 0.0
-            # else:
-            #     curvature = 0.0
-
-            if len(waypoints) > 5:
-                wp1 = np.array([waypoints[0][0], waypoints[0][1]])
-                wp2 = np.array([waypoints[1][0], waypoints[1][1]])
-                wp3 = np.array([waypoints[2][0], waypoints[2][1]])
-
-                # Compute vectors
-                vec1 = wp2 - wp1
-                vec2 = wp3 - wp2
-
-                # Calculate the angle between the two vectors
-                dot_product = np.dot(vec1, vec2)
-                norm_product = np.linalg.norm(vec1) * np.linalg.norm(vec2)
-
-                # Avoid division by zero
-                if norm_product > 0:
-                    curvature = np.arccos(np.clip(dot_product / norm_product, -1.0, 1.0))
-                    # print(curvature)
+            # 结合曲率和速度调整
+            if curvature > np.radians(40) or future_curvature > np.radians(40):  # 非常急的弯道
+                if ego_vel > 5.0:  # 高速情况
+                    control.throttle = 0.0
+                    control.brake = 1.0  # 强制刹车
+                else:  # 低速情况
+                    control.throttle = 0.2
+                    control.brake = 0.5  # 保持低速通过
+            elif curvature > np.radians(30) or future_curvature > np.radians(30):  # 急弯
+                if ego_vel > 7.50:  # 高速情况
+                    control.throttle = 0.0
+                    control.brake = 0.9  # 强力刹车
                 else:
-                    curvature = 0.0
-
-                # 11/30 added future curvature calc by [3][4][5]th waypoints
-                wp4 = np.array([waypoints[3][0], waypoints[3][1]])
-                wp5 = np.array([waypoints[4][0], waypoints[4][1]])
-                wp6 = np.array([waypoints[5][0], waypoints[5][1]])
-
-                # Compute vectors
-                vec3 = wp5 - wp4
-                vec4 = wp6 - wp5
-
-                # Calculate the angle between the two vectors
-                future_dot_product = np.dot(vec3, vec4)
-                future_norm_product = np.linalg.norm(vec3) * np.linalg.norm(vec4)
-
-                # Avoid division by zero
-                if future_norm_product > 0:
-                    future_curvature = np.arccos(np.clip(future_dot_product / future_norm_product, -1.0, 1.0))
-                    # print(curvature)
+                    control.throttle = 0.3
+                    control.brake = 0.4  # 控制速度
+            elif curvature > np.radians(20) or future_curvature > np.radians(20):  # 中等弯道
+                if ego_vel > 20.0/2:  # 高速情况
+                    control.throttle = 0.2
+                    control.brake = 0.7  # 减速通过
                 else:
-                    future_curvature = 0.0
-
-
-
-            
-            else:
-                curvature = 0.0
-
-            # Set thresholds for curvature
-            curvature_brake_threshold = np.radians(30)  # Braking for very sharp turns (~30 degrees or more)
-            curvature_throttle_threshold = np.radians(10)  # Reduce throttle for moderate turns (~10 degrees or more)
-
-
-            # Determine throttle and braking based on curvature
-            # if curvature > curvature_brake_threshold:
-            #     # Excessive curvature, apply brakes
-            #     if ego_vel > 7:
-            #         control.throttle = 0.0
-            #         control.brake = 0.8  # Full brake
-            #     else:
-            #         control.throttle = 0.9
-            #         control.brake = 0.0
-            # elif curvature > curvature_throttle_threshold:
-            #     # Moderate curvature, reduce throttle
-            #     throttle_value = max(0.5, 1.0 - curvature * 2.0)  # Adjust sensitivity with the multiplier
-            #     control.throttle = throttle_value
-            #     control.brake = 0.0
-            # else:
-            #     if ego_vel >= 35:
-            #         control.throttle = 0.75
-            #         control.brake = 0.0
-            #     else:
-            #         if ego_vel < 20:
-            #             control.throttle = 0.9
-            #             control.brake = 0.0
-            #         else:
-            #             control.throttle = 0.8
-            #             control.brake = 0.0
-
-            # 11/30 modified more fine grainded threshold
-            if future_curvature > 0.7:
-               if ego_vel > 5.0:
-                   control.throttle = 0.0
-                   control.brake = 0.9  # Full brake
-               else:
-                   control.throttle = 0.4
-                   control.brake = 0.0
-        
-            elif curvature > 0.8:
-                if ego_vel > 10.0:
-                   control.throttle = 0.1
-                   control.brake = 0.9  # Full brake
+                    control.throttle = 0.5
+                    control.brake = 0.2  # 保持平稳
+            elif curvature > np.radians(10) or future_curvature > np.radians(10):  # 小弯道
+                if ego_vel > 30.0/2:  # 高速情况
+                    control.throttle = 0.2
+                    control.brake = 0.7  # 轻刹车
                 else:
-                   control.throttle = 0.4
-                   control.brake = 0.0
+                    control.throttle = 0.7
+                    control.brake = 0.1  # 小幅减速
+            else:  # 直道或平缓曲率
+                if ego_vel > 25.0:  # 高速时限制加速
+                    control.throttle = 0.5
+                    control.brake = 0.0
+                elif ego_vel < 15.0:  # 低速时快速加速
+                    control.throttle = 1.0
+                    control.brake = 0.0
+                else:  # 中速保持
+                    control.throttle = 0.8
+                    control.brake = 0.0
 
-            elif curvature > 0.6:
-                if ego_vel > 30.0:
-                   control.throttle = 0.1
-                   control.brake = 0.9  # Full brake
-                else:
-                   control.throttle = 0.5
-                   control.brake = 0.0
+        # 6. 返回控制指令
+        return control
 
-            elif curvature > 0.4:
-               if ego_vel > 50.0:
-                   control.throttle = 0.1
-                   control.brake = 0.9  # Full brake
-               else:
-                   control.throttle = 0.6
-                   control.brake = 0.0
-
-            elif curvature > 0.2:
-               if ego_vel > 70.0:
-                   control.throttle = 0.1
-                   control.brake = 0.7
-               else:
-                   control.throttle = 0.7
-                   control.brake = 0.0
-
-            else:
-               if ego_vel >= 35:
-                   control.throttle = 0.75
-                   control.brake = 0.0
-               else:
-                   if ego_vel < 20:
-                       control.throttle = 0.9
-                       control.brake = 0.0
-                   else:
-                       control.throttle = 0.8
-                       control.brake = 0.0
-
-
-        
-        # 6. Boundary Check (Stay within the track boundaries)
+    def compute_local_trajectory(self, boundary):
+        """
+        根据 boundary 数据计算局部轨迹(trajectory)
+        """
         left_boundary = boundary[0]
         right_boundary = boundary[1]
-        left_boundary_x = left_boundary[0].transform.location.x
-        left_boundary_y = left_boundary[0].transform.location.y
-        right_boundary_x = right_boundary[0].transform.location.x
-        right_boundary_y = right_boundary[0].transform.location.y
+        # print(len(left_boundary))
+        trajectory = []
 
-        # Check distance to left and right boundaries
-        left_dist = math.sqrt((ego_x - left_boundary_x) ** 2 + (ego_y - left_boundary_y) ** 2)
-        right_dist = math.sqrt((ego_x - right_boundary_x) ** 2 + (ego_y - right_boundary_y) ** 2)
+        for i in range(len(left_boundary)):
+            left_point = np.array([left_boundary[i].transform.location.x, left_boundary[i].transform.location.y])
+            right_point = np.array([right_boundary[i].transform.location.x, right_boundary[i].transform.location.y])
 
-        # If too close to a boundary, adjust steering
-        if left_dist < 0.8:
-            control.steer += 0.1  # Steer right
-        elif right_dist < 0.8:
-            control.steer -= 0.1  # Steer left
+            # 计算中心线
+            center_point = (left_point + right_point) / 2
+            trajectory.append((center_point[0], center_point[1], 0))  # 假设轨迹是平面的
 
-        # Return the control commands
-        return control
+        return trajectory
+
+    def compute_curvature(self, trajectory, idx):
+        """
+        根据轨迹点计算曲率
+        """
+        if idx < 1 or idx >= len(trajectory) - 1:
+            return 0.0  # 边界条件
+
+        prev_point = np.array(trajectory[idx - 1][:2])
+        curr_point = np.array(trajectory[idx][:2])
+        next_point = np.array(trajectory[idx + 1][:2])
+
+        vec1 = curr_point - prev_point
+        vec2 = next_point - curr_point
+        dot_product = np.dot(vec1, vec2)
+        norm_product = np.linalg.norm(vec1) * np.linalg.norm(vec2)
+
+        if norm_product > 0:
+            return np.arccos(np.clip(dot_product / norm_product, -1.0, 1.0))
+        return 0.0
+
 
 
     def plan_path_with_rrt(self, start_location, waypoints, obstacles, boundary):
-        """
-        Plan a collision-free path using RRT.
-
-        Args:
-        start_location: carla.Location
-        waypoints: List[[x, y, z], ...]
-        obstacles: List[carla.Actor()]
-        boundary: List[List[left_boundary], List[right_boundary]]
-
-        Return: List[[x, y], ...] - A list of points defining the planned path.
-        """
         start_node = RRTNode(start_location.x, start_location.y)
         goal_node = RRTNode(waypoints[0][0], waypoints[0][1])
         tree = [start_node]
 
+        # 设置绘图
+        fig, ax = plt.subplots()
+        plt.ion()  # 开启交互模式
+
+        # 绘制边界和障碍物
+        self.plot_boundaries(ax, boundary)
+        self.plot_obstacles(ax, obstacles)
+
+        # 绘制起点和终点
+        ax.plot(start_node.x, start_node.y, 'go', markersize=10, label='起点')  # 绿色起点
+        ax.plot(goal_node.x, goal_node.y, 'ro', markersize=10, label='目标点')    # 红色目标点
+
+        plt.legend()
+
         for _ in range(self.max_iterations):
-            # Step 1: Sample a random point within the boundary
+            # 步骤1：在边界内随机采样一个点
             rand_point = self.sample_random_point(boundary)
 
-            # Step 2: Find the nearest node in the tree
+            # 步骤2：找到树中最近的节点
             nearest_node = self.get_nearest_node(tree, rand_point)
 
-            # Step 3: Steer towards the sampled point
+            # 步骤3：朝采样点方向延伸
             new_node = self.steer(nearest_node, rand_point)
 
-            # Step 4: Check for collisions
+            # 步骤4：检查是否有碰撞
             if self.is_collision_free(nearest_node, new_node, obstacles, boundary):
                 tree.append(new_node)
 
-                # Step 5: Check if the goal is reached
-                if self.distance(new_node, goal_node) < self.step_size:
-                    return self.extract_path(new_node)
+                # 绘制新边
+                ax.plot([nearest_node.x, new_node.x], [nearest_node.y, new_node.y], '-b')
 
-        # If no path is found, return an empty path
+                plt.pause(0.01)  # 暂停以更新绘图
+
+                # 步骤5：检查是否到达目标
+                if self.distance(new_node, goal_node) < self.step_size:
+                    path = self.extract_path(new_node)
+                    # 绘制最终路径
+                    self.plot_path(ax, path)
+                    plt.ioff()
+                    plt.show()
+                    return path
+
+        # 如果未找到路径，关闭绘图
+        plt.ioff()
+        plt.show()
         return []
+    
+    def plot_boundaries(self, ax, boundary):
+        left_boundary = boundary[0]
+        right_boundary = boundary[1]
+
+        # 提取x和y坐标
+        left_x = [wp.transform.location.x for wp in left_boundary]
+        left_y = [wp.transform.location.y for wp in left_boundary]
+        right_x = [wp.transform.location.x for wp in right_boundary]
+        right_y = [wp.transform.location.y for wp in right_boundary]
+
+        # 绘制边界线
+        ax.plot(left_x, left_y, 'k--', label='left_boundary')  # 黑色虚线
+        ax.plot(right_x, right_y, 'k--', label='right_boundary')
+
+    def plot_path(self, ax, path):
+        x_coords = [point[0] for point in path]
+        y_coords = [point[1] for point in path]
+        ax.plot(x_coords, y_coords, 'g', linewidth=2, label='Path Planning')
+        ax.legend()
+
+
 
     def sample_random_point(self, boundary):
         """Sample a random point within the given boundaries."""

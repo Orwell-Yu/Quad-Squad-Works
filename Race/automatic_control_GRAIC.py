@@ -724,7 +724,8 @@ def game_loop(args):
         world = World(client.get_world(), hud, args)
         controller = KeyboardControl(world)
 
-        agent = Agent()
+        vehicle = world.player
+        agent = Agent(vehicle=vehicle)
 
         # TODO: Change track name to a parameter
         original_wps = pickle.load(open("./waypoints/{}".format(args.map), 'rb'))
