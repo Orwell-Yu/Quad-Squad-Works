@@ -866,6 +866,8 @@ def game_loop(args):
             control = agent.run_step(filtered_obstacles, waypoints[idx:end_waypoints], vel, transform, boundary)
             control.manual_gear_shift = False
             world.player.apply_control(control)
+        
+        agent.plot_velocity_diagram()
 
     finally:
 

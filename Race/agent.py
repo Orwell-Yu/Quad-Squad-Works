@@ -51,8 +51,35 @@ def is_obstacle_in_front(ego_x, ego_y, ego_yaw, obstacle_x, obstacle_y, front_an
 class Agent():
     def __init__(self, vehicle=None):
         self.vehicle = vehicle
-        self.step_size = 0.1
-        self.max_iterations = 500
+        self.step_size = 0.5
+        self.max_iterations = 2000
+        self.velocity_history = []  # Store (time, velocity)
+
+    def log_velocity(self, time, velocity):
+        """
+        Log the velocity at a given time.
+        """
+        self.velocity_history.append((time, velocity))
+
+    def plot_velocity_diagram(self):
+        """
+        Plot a velocity diagram based on the logged velocities.
+        """
+        if not self.velocity_history:
+            print("No velocity data to plot.")
+            return
+        
+        times, velocities = zip(*self.velocity_history)
+        plt.figure(figsize=(10, 6))
+        plt.plot(times, velocities, label='Velocity (m/s)', linewidth=2)
+        plt.title('Velocity vs Time')
+        plt.xlabel('Time (s)')
+        plt.ylabel('Velocity (m/s)')
+        plt.grid(True)
+        plt.legend()
+        plt.show()
+
+
 
     # def run_step(self, filtered_obstacles, waypoints, vel, transform, boundary):
     #     """
@@ -451,6 +478,8 @@ class Agent():
         ego_x, ego_y = ego_location.x, ego_location.y
         ego_yaw = transform.rotation.yaw
         ego_vel = math.sqrt(vel.x ** 2 + vel.y ** 2 + vel.z ** 2)
+        current_time = len(self.velocity_history) * self.step_size /2
+        self.log_velocity(current_time, ego_vel)
 
         # 2. Calculate the trajectory based on the boundary
         trajectory = self.compute_local_trajectory(boundary)
@@ -463,6 +492,39 @@ class Agent():
         # Select a "lookahead" point in front of the Ego vehicle
         target_idx = min(closest_idx + 5, len(trajectory) - 1)
         target_x, target_y = trajectory[target_idx][:2]
+
+
+
+
+
+        # 3. Check for Obstacles and Plan Path Using RRT
+        min_distance_to_obstacle = float('inf')
+        obstacle_in_front = False
+        for obstacle in filtered_obstacles:
+            obstacle_location = obstacle.get_location()
+            obstacle_x, obstacle_y = obstacle_location.x, obstacle_location.y
+            
+            obstacle_distance = math.sqrt(
+                (obstacle_x - ego_x) ** 2 + (obstacle_y - ego_y) ** 2
+            )
+            
+            # Check if the obstacle is in front
+            if is_obstacle_in_front(ego_x, ego_y, ego_yaw, obstacle_x, obstacle_y):
+                obstacle_in_front = True
+                min_distance_to_obstacle = min(min_distance_to_obstacle, obstacle_distance)
+        
+        # If obstacles are detected within a certain range, use RRT to plan a path
+        if obstacle_in_front and min_distance_to_obstacle < 10.0:
+            # Abstract RRT Planner function to avoid obstacles
+            planned_path = self.plan_path_with_rrt(ego_location, waypoints, filtered_obstacles, boundary)
+            
+            # Use the first point in the planned path as the new target
+            if planned_path:
+                target_x, target_y = planned_path[0][0], planned_path[0][1]
+
+
+
+
 
         # 4. Calculate the steering angle adjustment
         dx = target_x - ego_x
@@ -576,49 +638,38 @@ class Agent():
         goal_node = RRTNode(waypoints[0][0], waypoints[0][1])
         tree = [start_node]
 
-        # 设置绘图
-        fig, ax = plt.subplots()
-        plt.ion()  # 开启交互模式
 
-        # 绘制边界和障碍物
+        fig, ax = plt.subplots()
+        plt.ion()
+
         self.plot_boundaries(ax, boundary)
         self.plot_obstacles(ax, obstacles)
 
-        # 绘制起点和终点
-        ax.plot(start_node.x, start_node.y, 'go', markersize=10, label='起点')  # 绿色起点
-        ax.plot(goal_node.x, goal_node.y, 'ro', markersize=10, label='目标点')    # 红色目标点
+        ax.plot(start_node.x, start_node.y, 'go', markersize=10, label='start')  # 绿色起点
+        ax.plot(goal_node.x, goal_node.y, 'ro', markersize=10, label='end')    # 红色目标点
 
         plt.legend()
 
         for _ in range(self.max_iterations):
-            # 步骤1：在边界内随机采样一个点
             rand_point = self.sample_random_point(boundary)
 
-            # 步骤2：找到树中最近的节点
             nearest_node = self.get_nearest_node(tree, rand_point)
 
-            # 步骤3：朝采样点方向延伸
             new_node = self.steer(nearest_node, rand_point)
 
-            # 步骤4：检查是否有碰撞
             if self.is_collision_free(nearest_node, new_node, obstacles, boundary):
                 tree.append(new_node)
 
-                # 绘制新边
                 ax.plot([nearest_node.x, new_node.x], [nearest_node.y, new_node.y], '-b')
+                plt.pause(0.01)
 
-                plt.pause(0.01)  # 暂停以更新绘图
-
-                # 步骤5：检查是否到达目标
-                if self.distance(new_node, goal_node) < self.step_size:
+                if self.distance(new_node, goal_node) < 1:
                     path = self.extract_path(new_node)
-                    # 绘制最终路径
                     self.plot_path(ax, path)
                     plt.ioff()
                     plt.show()
                     return path
 
-        # 如果未找到路径，关闭绘图
         plt.ioff()
         plt.show()
         return []
@@ -636,6 +687,40 @@ class Agent():
         # 绘制边界线
         ax.plot(left_x, left_y, 'k--', label='left_boundary')  # 黑色虚线
         ax.plot(right_x, right_y, 'k--', label='right_boundary')
+    
+    def plot_obstacles(self, ax, obstacles):
+        for obstacle in obstacles:
+            vx, vy = self.get_obstacle_vertices(obstacle)
+            ax.plot(vx, vy, marker='o', linestyle='-', linewidth=2)
+            # ax.scatter(vx, vy, color='yellow', label='Obstacle' if 'Obstacle' not in [t.get_text() for t in ax.texts] else "")
+        
+    def get_obstacle_vertices(self, obstacle):
+        bounding_box = obstacle.bounding_box
+
+        # Get the vehicle's transformation in the world
+        vehicle_transform = obstacle.get_transform()
+
+        # Get the local vertices of the bounding box
+        extent = bounding_box.extent  # carla.Vector3D, half the size of the box in each direction
+
+        # Define the eight vertices of the bounding box in local coordinates
+        local_vertices = [
+            carla.Location(x=extent.x, y=extent.y, z=extent.z),
+            carla.Location(x=extent.x, y=-extent.y, z=extent.z),
+            carla.Location(x=-extent.x, y=extent.y, z=extent.z),
+            carla.Location(x=-extent.x, y=-extent.y, z=extent.z),
+            carla.Location(x=extent.x, y=extent.y, z=-extent.z),
+            carla.Location(x=extent.x, y=-extent.y, z=-extent.z),
+            carla.Location(x=-extent.x, y=extent.y, z=-extent.z),
+            carla.Location(x=-extent.x, y=-extent.y, z=-extent.z)
+        ]
+
+        # Transform local vertices to world coordinates
+        world_vertices = [vehicle_transform.transform(location) for location in local_vertices]
+        vx = [vert.x for vert in world_vertices]
+        vy = [vert.y for vert in world_vertices]
+
+        return vx, vy
 
     def plot_path(self, ax, path):
         x_coords = [point[0] for point in path]
@@ -704,24 +789,24 @@ class Agent():
             # Use obstacle radius if available, otherwise default to 2.0
             obstacle_radius = getattr(obstacle, 'bounding_box', None)
             if obstacle_radius:
-                collision_radius = obstacle_radius.extent.x  # Adjust based on actual bounding box
+                collision_radius = obstacle_radius.extent.x + 1.5  # Adjust based on actual bounding box
             else:
-                collision_radius = 3.5
+                collision_radius = 3
 
             # If the obstacle is too close to the path, return False
             if obstacle_distance < collision_radius:
-                print(f"Collision detected with obstacle at ({obs_x}, {obs_y})")
+                # print(f"Collision detected with obstacle at ({obs_x}, {obs_y})")
                 return False
 
-        # # Check if the path is within the track boundaries
-        # left_boundary = boundary[0]
-        # right_boundary = boundary[1]
+        # Check if the path is within the track boundaries
+        left_boundary = boundary[0]
+        right_boundary = boundary[1]
 
-        # # Check both from_node and to_node
-        # if not self.is_within_boundaries(from_node, left_boundary, right_boundary) or \
-        # not self.is_within_boundaries(to_node, left_boundary, right_boundary):
-        #     print(f"Node ({to_node.x}, {to_node.y}) is out of track boundaries.")
-        #     return False
+        # Check both from_node and to_node
+        if not self.is_within_boundaries(from_node, left_boundary, right_boundary) or \
+        not self.is_within_boundaries(to_node, left_boundary, right_boundary):
+            print(f"Node ({to_node.x}, {to_node.y}) is out of track boundaries.")
+            return False
 
         # Path is collision-free and within boundaries
         return True
@@ -741,15 +826,23 @@ class Agent():
         node_x, node_y = node.x, node.y
 
         # Ensure the node is within the x-range of the boundaries
-        min_x = min(pt.transform.location.x for pt in left_boundary)
-        max_x = max(pt.transform.location.x for pt in right_boundary)
-        if not (min_x <= node_x <= max_x):
+        min_x_l = min(pt.transform.location.x for pt in left_boundary)
+        min_x_r = min(pt.transform.location.x for pt in right_boundary)
+        max_x_l = max(pt.transform.location.x for pt in left_boundary)
+        max_x_r = max(pt.transform.location.x for pt in right_boundary)
+        min_x = min(min_x_l, min_x_r)
+        max_x = max(max_x_l, max_x_r)
+        if node_x < min_x or node_x > max_x:
             return False
 
         # Ensure the node is within the y-range defined by the boundaries
-        min_y = min(pt.transform.location.y for pt in left_boundary)
-        max_y = max(pt.transform.location.y for pt in right_boundary)
-        if not (min_y <= node_y <= max_y):
+        min_y_l = min(pt.transform.location.y for pt in left_boundary)
+        min_y_r = min(pt.transform.location.y for pt in right_boundary)
+        max_y_l = max(pt.transform.location.y for pt in left_boundary)
+        max_y_r = max(pt.transform.location.y for pt in right_boundary)
+        min_y = min(min_y_l, min_y_r)
+        max_y = max(max_y_l, max_y_r)
+        if node_y < min_y or node_y > max_y:
             return False
 
         return True
