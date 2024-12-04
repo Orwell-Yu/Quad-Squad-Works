@@ -437,32 +437,34 @@ class Agent():
 
     #     # Return the control commands
     #     return control
+    
+
 
     def run_step(self, filtered_obstacles, waypoints, vel, transform, boundary):
         """
-        每次根据新的 boundary 数据动态计算 trajectory 并控制车辆移动
+        Dynamically calculate the trajectory and control vehicle movement based on updated boundary data in each step.
         """
         control = carla.VehicleControl()
 
-        # 1. 获取 Ego 车辆的当前位置和状态
+        # 1. Get the current position and state of the Ego vehicle
         ego_location = transform.location
         ego_x, ego_y = ego_location.x, ego_location.y
         ego_yaw = transform.rotation.yaw
         ego_vel = math.sqrt(vel.x ** 2 + vel.y ** 2 + vel.z ** 2)
 
-        # 2. 根据 boundary 计算轨迹
+        # 2. Calculate the trajectory based on the boundary
         trajectory = self.compute_local_trajectory(boundary)
 
-        # 3. 找到离 Ego 最近的轨迹点作为目标点
+        # 3. Find the trajectory point closest to the Ego vehicle as the target point
         closest_idx = min(
             range(len(trajectory)),
             key=lambda i: math.sqrt((trajectory[i][0] - ego_x) ** 2 + (trajectory[i][1] - ego_y) ** 2)
         )
-        # 选取前方一个 "lookahead" 点
+        # Select a "lookahead" point in front of the Ego vehicle
         target_idx = min(closest_idx + 5, len(trajectory) - 1)
         target_x, target_y = trajectory[target_idx][:2]
 
-        # 4. 计算方向角调整
+        # 4. Calculate the steering angle adjustment
         dx = target_x - ego_x
         dy = target_y - ego_y
         angle_to_target = math.degrees(math.atan2(dy, dx))
@@ -475,57 +477,62 @@ class Agent():
         max_steering_angle = 45.0
         control.steer = max(-1.0, min(1.0, angle_diff / max_steering_angle))
 
-        # 5. 计算速度控制
+        # 5. Calculate speed control
         if len(trajectory) > 2:
             curvature = self.compute_curvature(trajectory, closest_idx)
             future_curvature = self.compute_curvature(trajectory, closest_idx + 2) if closest_idx + 2 < len(trajectory) else curvature
 
-            # 结合曲率和速度调整
-            if curvature > np.radians(40) or future_curvature > np.radians(40):  # 非常急的弯道
-                if ego_vel > 3.0:  # 高速情况
+            # Adjust speed based on curvature
+            if curvature > np.radians(40) or future_curvature > np.radians(40):  # Very sharp turn
+                if ego_vel > 3.0:  # High speed
                     control.throttle = 0.0
-                    control.brake = 1.0  # 强制刹车
-                else:  # 低速情况
+                    control.brake = 1.0  # Full brake
+                else:  # Low speed
                     control.throttle = 0.2
-                    control.brake = 0.0  # 保持低速通过
-            elif curvature > np.radians(30) or future_curvature > np.radians(30):  # 急弯
-                if ego_vel > 5.0:  # 高速情况
+                    control.brake = 0.0  # Maintain low speed
+            elif curvature > np.radians(30) or future_curvature > np.radians(30):  # Sharp turn
+                if ego_vel > 5.0:  # High speed
                     control.throttle = 0.0
-                    control.brake = 0.9  # 强力刹车
+                    control.brake = 0.9  # Strong braking
                 else:
                     control.throttle = 0.3
-                    control.brake = 0.0  # 控制速度
-            elif curvature > np.radians(20) or future_curvature > np.radians(20):  # 中等弯道
-                if ego_vel > 8.0:  # 高速情况
+                    control.brake = 0.0  # Controlled speed
+            elif curvature > np.radians(20) or future_curvature > np.radians(20):  # Moderate turn
+                if ego_vel > 8.0:  # High speed
                     control.throttle = 0.0
-                    control.brake = 0.8  # 减速通过
+                    control.brake = 0.8  # Slow down
                 else:
                     control.throttle = 0.4
-                    control.brake = 0.0  # 保持平稳
-            elif curvature > np.radians(10) or future_curvature > np.radians(10):  # 小弯道
-                if ego_vel > 12.0:  # 高速情况
+                    control.brake = 0.0  # Smooth drive
+            elif curvature > np.radians(10) or future_curvature > np.radians(10):  # Gentle turn
+                if ego_vel > 12.0:  # High speed
                     control.throttle = 0.0
-                    control.brake = 0.6  # 轻刹车
+                    control.brake = 0.6  # Light braking
                 else:
                     control.throttle = 0.6
-                    control.brake = 0.4  # 小幅减速
-            else:  # 直道或平缓曲率
-                if ego_vel > 20.0:  # 高速时限制加速
+                    control.brake = 0.4  # Slight deceleration
+            else:  # Straight road or mild curvature
+                if ego_vel > 20.0:  # Limit acceleration at high speed
                     control.throttle = 0.7
                     control.brake = 0.0
-                elif ego_vel < 10.0:  # 低速时快速加速
+                elif ego_vel < 10.0:  # Accelerate quickly at low speed
                     control.throttle = 0.8
                     control.brake = 0.0
-                else:  # 中速保持
+                else:  # Maintain speed at medium speed
                     control.throttle = 0.6
                     control.brake = 0.0
 
-        # 6. 返回控制指令
+            # 6. Return control commands
         return control
+
+
+
+
+
 
     def compute_local_trajectory(self, boundary):
         """
-        根据 boundary 数据计算局部轨迹(trajectory)
+        use boundary to calculate current 20m(?) trajectory
         """
         left_boundary = boundary[0]
         right_boundary = boundary[1]
@@ -536,7 +543,7 @@ class Agent():
             left_point = np.array([left_boundary[i].transform.location.x, left_boundary[i].transform.location.y])
             right_point = np.array([right_boundary[i].transform.location.x, right_boundary[i].transform.location.y])
 
-            # 计算中心线
+            # calc center line
             center_point = (left_point + right_point) / 2
             trajectory.append((center_point[0], center_point[1], 0))  # 假设轨迹是平面的
 
@@ -544,10 +551,10 @@ class Agent():
 
     def compute_curvature(self, trajectory, idx):
         """
-        根据轨迹点计算曲率
+        use trajectory points to calculate curvature
         """
         if idx < 1 or idx >= len(trajectory) - 1:
-            return 0.0  # 边界条件
+            return 0.0  # edge case
 
         prev_point = np.array(trajectory[idx - 1][:2])
         curr_point = np.array(trajectory[idx][:2])
