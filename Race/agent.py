@@ -639,16 +639,16 @@ class Agent():
         tree = [start_node]
 
 
-        fig, ax = plt.subplots()
-        plt.ion()
+        # fig, ax = plt.subplots()
+        # plt.ion()
 
-        self.plot_boundaries(ax, boundary)
-        self.plot_obstacles(ax, obstacles)
+        # self.plot_boundaries(ax, boundary)
+        # self.plot_obstacles(ax, obstacles)
 
-        ax.plot(start_node.x, start_node.y, 'go', markersize=10, label='start')  # 绿色起点
-        ax.plot(goal_node.x, goal_node.y, 'ro', markersize=10, label='end')    # 红色目标点
+        # ax.plot(start_node.x, start_node.y, 'go', markersize=10, label='start')  # 绿色起点
+        # ax.plot(goal_node.x, goal_node.y, 'ro', markersize=10, label='end')    # 红色目标点
 
-        plt.legend()
+        # plt.legend()
 
         for _ in range(self.max_iterations):
             rand_point = self.sample_random_point(boundary)
@@ -660,18 +660,18 @@ class Agent():
             if self.is_collision_free(nearest_node, new_node, obstacles, boundary):
                 tree.append(new_node)
 
-                ax.plot([nearest_node.x, new_node.x], [nearest_node.y, new_node.y], '-b')
-                plt.pause(0.01)
+                # ax.plot([nearest_node.x, new_node.x], [nearest_node.y, new_node.y], '-b')
+                # plt.pause(0.01)
 
                 if self.distance(new_node, goal_node) < 1:
                     path = self.extract_path(new_node)
-                    self.plot_path(ax, path)
-                    plt.ioff()
-                    plt.show()
+                    # self.plot_path(ax, path)
+                    # plt.ioff()
+                    # plt.show()
                     return path
 
-        plt.ioff()
-        plt.show()
+        # plt.ioff()
+        # plt.show()
         return []
     
     def plot_boundaries(self, ax, boundary):
