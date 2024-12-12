@@ -4,9 +4,9 @@ import time
 import pickle 
 
 # map = "t3" # t1_triple, t2_triple, t3, t4, shanghai_intl_circuit
-# map = "shanghai_intl_circuit"
+map = "shanghai_intl_circuit"
 # map = "t1_triple"
-map = "t2_triple"
+# map = "t2_triple"
 # map = "t3"
 # map = "t4"
 

@@ -54,6 +54,7 @@ class Agent():
         self.step_size = 0.5
         self.max_iterations = 2000
         self.velocity_history = []  # Store (time, velocity)
+        self.step = 0
 
     def log_velocity(self, time, velocity):
         """
@@ -514,7 +515,7 @@ class Agent():
                 min_distance_to_obstacle = min(min_distance_to_obstacle, obstacle_distance)
         
         # If obstacles are detected within a certain range, use RRT to plan a path
-        if obstacle_in_front and min_distance_to_obstacle < 10.0:
+        if self.step % 1 == 0 and obstacle_in_front and min_distance_to_obstacle < 25.0:
             # Abstract RRT Planner function to avoid obstacles
             planned_path = self.plan_path_with_rrt(ego_location, waypoints, filtered_obstacles, boundary)
             
@@ -585,6 +586,9 @@ class Agent():
                     control.brake = 0.0
 
             # 6. Return control commands
+        
+
+        self.step += 1
         return control
 
 
@@ -639,16 +643,16 @@ class Agent():
         tree = [start_node]
 
 
-        # fig, ax = plt.subplots()
-        # plt.ion()
+        fig, ax = plt.subplots()
+        plt.ion()
 
-        # self.plot_boundaries(ax, boundary)
-        # self.plot_obstacles(ax, obstacles)
+        self.plot_boundaries(ax, boundary)
+        self.plot_obstacles(ax, obstacles)
 
-        # ax.plot(start_node.x, start_node.y, 'go', markersize=10, label='start')  # 绿色起点
-        # ax.plot(goal_node.x, goal_node.y, 'ro', markersize=10, label='end')    # 红色目标点
+        ax.plot(start_node.x, start_node.y, 'go', markersize=10, label='start')  # 绿色起点
+        ax.plot(goal_node.x, goal_node.y, 'ro', markersize=10, label='end')    # 红色目标点
 
-        # plt.legend()
+        plt.legend()
 
         for _ in range(self.max_iterations):
             rand_point = self.sample_random_point(boundary)
@@ -660,18 +664,18 @@ class Agent():
             if self.is_collision_free(nearest_node, new_node, obstacles, boundary):
                 tree.append(new_node)
 
-                # ax.plot([nearest_node.x, new_node.x], [nearest_node.y, new_node.y], '-b')
-                # plt.pause(0.01)
+                ax.plot([nearest_node.x, new_node.x], [nearest_node.y, new_node.y], '-b')
+                plt.pause(0.01)
 
                 if self.distance(new_node, goal_node) < 1:
                     path = self.extract_path(new_node)
-                    # self.plot_path(ax, path)
-                    # plt.ioff()
-                    # plt.show()
+                    self.plot_path(ax, path)
+                    plt.ioff()
+                    plt.show()
                     return path
 
-        # plt.ioff()
-        # plt.show()
+        plt.ioff()
+        plt.show()
         return []
     
     def plot_boundaries(self, ax, boundary):
@@ -803,10 +807,10 @@ class Agent():
         right_boundary = boundary[1]
 
         # Check both from_node and to_node
-        if not self.is_within_boundaries(from_node, left_boundary, right_boundary) or \
-        not self.is_within_boundaries(to_node, left_boundary, right_boundary):
-            print(f"Node ({to_node.x}, {to_node.y}) is out of track boundaries.")
-            return False
+        # if not self.is_within_boundaries(from_node, left_boundary, right_boundary) or \
+        # not self.is_within_boundaries(to_node, left_boundary, right_boundary):
+        #     print(f"Node ({to_node.x}, {to_node.y}) is out of track boundaries.")
+        #     return False
 
         # Path is collision-free and within boundaries
         return True
