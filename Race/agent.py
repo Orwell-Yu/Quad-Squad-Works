@@ -300,27 +300,7 @@ class Agent():
         
         
         
-        
-        
-        
-        
-        
-        
-        
         else:
-        # 5. Calculate the steering angle adjustment for normal driving
-            dx = target_x - ego_x
-            dy = target_y - ego_y
-            angle_to_target = math.degrees(math.atan2(dy, dx))
-            angle_diff = angle_to_target - ego_yaw
-            while angle_diff > 180:
-                angle_diff -= 360
-            while angle_diff < -180:
-                angle_diff += 360
-
-            max_steering_angle = 45.0
-            control.steer = max(-1.0, min(1.0, angle_diff / max_steering_angle))
-
             # 6. Calculate speed control based on curvature
             if len(trajectory) > 2:
                 curvature = self.compute_curvature(trajectory, closest_idx)
@@ -364,6 +344,23 @@ class Agent():
                     else:
                         control.throttle = 0.6
                         control.brake = 0.0
+        
+
+
+        # 5. Calculate the steering angle adjustment for normal driving
+        dx = target_x - ego_x
+        dy = target_y - ego_y
+        angle_to_target = math.degrees(math.atan2(dy, dx))
+        angle_diff = angle_to_target - ego_yaw
+        while angle_diff > 180:
+            angle_diff -= 360
+        while angle_diff < -180:
+            angle_diff += 360
+
+        max_steering_angle = 45.0
+        control.steer = max(-1.0, min(1.0, angle_diff / max_steering_angle))
+
+
 
         # 7. Return control commands
         return control
