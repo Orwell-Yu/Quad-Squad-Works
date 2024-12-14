@@ -103,24 +103,23 @@ class Agent():
                 # Check if obstacle intersects with the trajectory
                 for point in trajectory:
                     traj_x, traj_y = point[:2]
-                    if math.sqrt((traj_x - obstacle_x) ** 2 + (traj_y - obstacle_y) ** 2) < 2.0:  # Check within a radius
+                    if math.sqrt((traj_x - obstacle_x) ** 2 + (traj_y - obstacle_y) ** 2) < 20.0:  # Check within a radius
                         blocking_obstacle = obstacle
                         min_distance_to_obstacle = min(min_distance_to_obstacle, obstacle_distance)
                         break
 
         # 5. Path planning or direct target handling
-        if self.step % 1 == 0 and blocking_obstacle and min_distance_to_obstacle < 25.0:
+        if self.step % 10 == 0 and blocking_obstacle and min_distance_to_obstacle < 25.0:
             # Try A* path planning
-            planned_path = self.plan_path_with_a_star((ego_x, ego_y), waypoints[0], filtered_obstacles, boundary)
+            # planned_path = self.plan_path_with_a_star((ego_x, ego_y), trajectory[-1][:2], filtered_obstacles, boundary)
+            planned_path = self.plan_path_with_a_star((ego_x, ego_y), waypoints[1], filtered_obstacles, boundary)
+            print("finished")
 
             if planned_path:
+                # self.visualize_path(boundary, filtered_obstacles, (ego_x, ego_y), waypoints[1], planned_path)
                 # Use the first point in the planned path as the new target
                 target_x, target_y = planned_path[0][0], planned_path[0][1]
             else:
-                # Follow the obstacle in front if no alternative path found
-                print("Path Not Found!!!!!")
-                target_x, target_y = obstacle_x, obstacle_y
-
                 relative_speed = math.sqrt(obstacle_velocity.x ** 2 + obstacle_velocity.y ** 2) - ego_vel
 
                 if min_distance_to_obstacle < safe_distance:  # If too close, slow down
@@ -327,13 +326,13 @@ class Agent():
         Neighbors are limited to positions in front of the car.
         """
         resolution = 0.25  # Finer resolution (meters per grid cell)
-        margin = 5.0       # Extend search area by 5 meters beyond boundaries
+        margin = 0.5      # Extend search area by 5 meters beyond boundaries
 
         left_boundary = boundary[0]
         right_boundary = boundary[1]
 
         vehicle_length = 5.0  # Meters
-        vehicle_width = 2.0   # Meters
+        vehicle_width = 2.2   # Meters
         safety_margin = 0.5   # Additional clearance
 
         # Compute extended boundary extents
@@ -361,8 +360,8 @@ class Agent():
             """
             Check if a position (x, y) is free of obstacles and if the vehicle can fit.
             """
-            if x < min_x or x > max_x or y < min_y or y > max_y:
-                return False
+            # if x < min_x or x > max_x or y < min_y or y > max_y:
+            #     return False
 
             for obs in obstacles:
                 obs_loc = obs.get_location()
@@ -443,7 +442,7 @@ class Agent():
                     node = came_from[node]
                 path.append(start_pos)
                 path.reverse()
-                self.visualize_path(boundary, obstacles, start_pos, goal_pos, path)
+                # self.visualize_path(boundary, obstacles, start_pos, goal_pos, path)
                 return path
 
             # Assume heading_angle is retrieved from the agent or calculated dynamically
@@ -465,5 +464,4 @@ class Agent():
 
         print("A* could not find a path.")
         return []
-
 
